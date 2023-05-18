@@ -1,7 +1,6 @@
 
 provider "azurerm" {
   skip_provider_registration = true
-
   features {}
 }
 
@@ -24,6 +23,7 @@ resource "azurerm_subnet" "sbnet1" {
   virtual_network_name = azurerm_virtual_network.vnet1.name
   address_prefixes     = ["10.0.0.0/16"]
 }
+
 
 resource "azurerm_network_interface" "nic1" {
   name                = "nic1"
@@ -76,7 +76,6 @@ resource "azurerm_virtual_machine" "vm1" {
 
 provider "azurerm" {
   skip_provider_registration = true
-
   features {}
 }
 
