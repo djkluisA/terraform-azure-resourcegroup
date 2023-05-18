@@ -41,23 +41,30 @@ resource "azurerm_virtual_machine" "example" {
   resource_group_name   = data.azurerm_resource_group.example.name
   network_interface_ids = [azurerm_network_interface.example.id]
 
-  vm_size              = "Standard_B2s"
+  vm_size                        = "Standard_B2s"
   delete_os_disk_on_termination = true
 
+  storage_os_disk {
+    name              = "osdisk1"
+    caching           = "ReadWrite"
+    create_option     = "FromImage"
+    managed_disk_type = "Premium_LRS"
+  }
+
   storage_image_reference {
-    publisher = "canonical"
+    publisher = "Canonical"
     offer     = "UbuntuServer"
     sku       = "18.04-LTS"
     version   = "latest"
   }
 
-  os_disk {
-    name              = "osdisk1"
-    caching           = "ReadWrite"
-    storage_account_type = "Standard_LRS"
+  os_profile {
+    computer_name  = "hostname"
+    admin_username = "azureuser"
+    admin_password = "Manolita3232"
   }
 
-  admin_username = "azureuser"
-  admin_password = "Manolita3232"
-  disable_password_authentication = false
+  os_profile_linux_config {
+    disable_password_authentication = false
+  }
 }
