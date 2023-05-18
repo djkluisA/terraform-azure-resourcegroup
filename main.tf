@@ -52,11 +52,7 @@ resource "azurerm_virtual_machine" "vm1" {
   resource_group_name           = data.azurerm_resource_group.existing.name
   location                      = data.azurerm_resource_group.existing.location
   network_interface_ids          = [azurerm_network_interface.nic1.id]
-  computer_name                  = "vm1"
-  admin_username                 = "azureuser"
-  admin_password                 = "Manolita3232"
-
-  vm_size = "Standard_B2s"
+  size                          = "Standard_B2s"
 
   storage_os_disk {
     name              = "osdisk1"
@@ -72,8 +68,13 @@ resource "azurerm_virtual_machine" "vm1" {
     version   = "latest"
   }
 
-  os_profile_linux_config {
-    disable_password_authentication = false
+  os_profile {
+    computer_name = "vm1"
+    admin_username = "azureuser"
+    admin_password = "Manolita3232"
+    linux_config = {
+      disable_password_authentication = false
+    }
   }
 
   depends_on = [
