@@ -55,16 +55,13 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   }
 
   storage_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
-    version   = "latest"
+    id        = "/subscriptions/<subscription_id>/resourceGroups/<resource_group_name>/providers/Microsoft.Compute/images/<image_name>"
   }
 
   os_profile {
     computer_name  = "vm"
     admin_username = "azureuser"
-    linux_configuration {
+    linux_config {
       disable_password_authentication = false
     }
     admin_password = "Manolita3232"
