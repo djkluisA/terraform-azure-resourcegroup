@@ -74,6 +74,12 @@ resource "azurerm_virtual_machine" "vm1" {
   }
 }
 
+provider "azurerm" {
+  skip_provider_registration = true
+
+  features {}
+}
+
  {
   required_providers {
     azurerm = {
