@@ -30,7 +30,6 @@ resource "azurerm_network_interface" "nic1" {
   ip_configuration {
     name                          = "nic1-configuration"
     subnet_id                     = azurerm_subnet.sbnet1.id
-    private_ip_address_static     = "10.0.0.7"
     private_ip_address_allocation = "Static"
   }
 }
