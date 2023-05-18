@@ -48,23 +48,30 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   resource_group_name   = data.azurerm_resource_group.rg.name
   size                  = "Standard_B2s"
 
-  storage_os_disk {
+  os_disk {
     name              = "${azurerm_linux_virtual_machine.vm1.name}-osdisk"
     caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
+    storage_account_type = "Standard_LRS"
+  }
+
+  storage_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
   }
 
   os_profile {
     computer_name  = "vm"
     admin_username = "azureuser"
+    linux_configuration {
+      disable_password_authentication = false
+    }
     admin_password = "Manolita3232"
   }
 
-  os_profile_linux_config {
-    disable_password_authentication = false
-  }
-
+  network_interface_ids = [azurerm_network_interface.nic1.id]
+  
   source_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
@@ -75,20 +82,4 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   tags = {
     environment = "sandbox"
   }
-
-  storage_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
-    version   = "latest"
-  }
-
-  os_disk {
-    name              = "${azurerm_linux_virtual_machine.vm1.name}-osdisk"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
-  }
-
-  network_interface_ids = [azurerm_network_interface.nic1.id]
 }
