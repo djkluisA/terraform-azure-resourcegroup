@@ -1,7 +1,17 @@
 
+provider "azurerm" {
+  features {}
+
+  skip_provider_registration = true
+}
+
+data "azurerm_resource_group" "rg" {
+  name = "1-a21e6146-playground-sandbox"
+}
+
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
-  address_space       = var.address_space
+  address_space       = ["10.0.0.0/16"]
 
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
@@ -15,7 +25,7 @@ resource "azurerm_subnet" "sbnet1" {
   name                 = "sbnet1"
   resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = ["10.0.0.0/16"]
+  address_prefixes     = ["10.0.0.0/24"]
 }
 
 resource "azurerm_network_interface" "nic1" {
@@ -41,6 +51,23 @@ resource "azurerm_linux_virtual_machine" "vm1" {
 
   network_interface_ids = [azurerm_network_interface.nic1.id]
 
+  storage_os_disk {
+    name              = "${azurerm_linux_virtual_machine.vm1.name}-osdisk"
+    caching           = "ReadWrite"
+    create_option     = "FromImage"
+    managed_disk_type = "Standard_LRS"
+  }
+
+  os_profile {
+    computer_name  = "vm"
+    admin_username = "azureuser"
+    admin_password = "Manolita3232"
+  }
+
+  os_profile_linux_config {
+    disable_password_authentication = false
+  }
+
   source_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
@@ -48,29 +75,7 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     version   = "latest"
   }
 
-  os_disk {
-    name              = "${azurerm_linux_virtual_machine.vm1.name}-osdisk"
-    caching           = "ReadWrite"
-    storage_account_type = "Standard_LRS"
-  }
-
-  admin_username                = "azureuser"
-  admin_password                = "Manolita3232"
-  disable_password_authentication = false
-
   tags = {
     environment = "sandbox"
   }
-}
-
-data "azurerm_resource_group" "rg" {
-  name = "1-a21e6146-playground-sandbox"
-}
-
-provider "azurerm" {
-  version = "~> 2.0"
-
-  skip_provider_registration = true
-
-  features {}
 }
