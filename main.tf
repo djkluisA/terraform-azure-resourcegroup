@@ -16,7 +16,7 @@ resource "azurerm_virtual_network" "vnet1" {
   resource_group_name = data.azurerm_resource_group.existing.name
 
   depends_on = [
-    azurerm_resource_group.existing
+    data.azurerm_resource_group.existing
   ]
 }
 
@@ -63,7 +63,7 @@ resource "azurerm_virtual_machine" "vm1" {
     managed_disk_type = "Standard_LRS"
   }
 
-  source_image_reference {
+  storage_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
     sku       = "16.04-LTS"
