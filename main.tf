@@ -1,47 +1,53 @@
 
 provider "azurerm" {
-  features {}
   skip_provider_registration = true
+  features {}
 }
 
-data "azurerm_resource_group" "rg" {
+data "azurerm_resource_group" "existing" {
   name = "1-a21e6146-playground-sandbox"
 }
 
-resource "azurerm_virtual_network" "vnet" {
+resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
-  address_space       = ["10.0.0.0/8"]
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.existing.location
+  resource_group_name = data.azurerm_resource_group.existing.name
+  address_space       = ["10.0.0.0/16"]
 }
 
-resource "azurerm_subnet" "sbnet" {
+resource "azurerm_subnet" "sbnet1" {
   name                 = "sbnet1"
-  resource_group_name  = data.azurerm_resource_group.rg.name
-  virtual_network_name = azurerm_virtual_network.vnet.name
+  resource_group_name  = data.azurerm_resource_group.existing.name
+  virtual_network_name = azurerm_virtual_network.vnet1.name
   address_prefixes     = ["10.0.0.0/16"]
 }
 
-resource "azurerm_network_interface" "nic" {
+resource "azurerm_network_interface" "nic1" {
   name                = "nic1"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.existing.location
+  resource_group_name = data.azurerm_resource_group.existing.name
 
   ip_configuration {
-    name                          = "config1"
-    subnet_id                     = azurerm_subnet.sbnet.id
-    private_ip_address            = "10.0.0.7"
-    private_ip_address_allocation = "static"
+    name                          = "nic1-configuration"
+    subnet_id                     = azurerm_subnet.sbnet1.id
+    private_ip_address_static     = "10.0.0.7"
+    private_ip_address_allocation = "Static"
   }
 }
 
-resource "azurerm_linux_virtual_machine" "vm" {
+resource "azurerm_linux_virtual_machine" "vm1" {
   name                = "vm1"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+  resource_group_name = data.azurerm_resource_group.existing.name
+  location            = data.azurerm_resource_group.existing.location
   size                = "Standard_B2s"
 
-  network_interface_ids = [azurerm_network_interface.nic.id]
+  admin_username                 = "azureuser"
+  admin_password                 = "Manolita3232"
+  disable_password_authentication = false
+
+  network_interface_ids = [
+    azurerm_network_interface.nic1.id,
+  ]
 
   source_image_reference {
     publisher = "Canonical"
@@ -51,12 +57,8 @@ resource "azurerm_linux_virtual_machine" "vm" {
   }
 
   os_disk {
-    name              = "osdisk1"
+    name              = "os_disk"
     caching           = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
-
-  admin_username              = "azureuser"
-  admin_password              = "Manolita3232"
-  disable_password_authentication = false
 }
