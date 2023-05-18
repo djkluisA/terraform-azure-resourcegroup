@@ -1,7 +1,6 @@
 
 provider "azurerm" {
   features {}
-
   skip_provider_registration = true
 }
 
@@ -49,8 +48,6 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   resource_group_name   = data.azurerm_resource_group.rg.name
   size                  = "Standard_B2s"
 
-  network_interface_ids = [azurerm_network_interface.nic1.id]
-
   storage_os_disk {
     name              = "${azurerm_linux_virtual_machine.vm1.name}-osdisk"
     caching           = "ReadWrite"
@@ -78,4 +75,20 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   tags = {
     environment = "sandbox"
   }
+
+  storage_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
+  }
+
+  os_disk {
+    name              = "${azurerm_linux_virtual_machine.vm1.name}-osdisk"
+    caching           = "ReadWrite"
+    create_option     = "FromImage"
+    managed_disk_type = "Standard_LRS"
+  }
+
+  network_interface_ids = [azurerm_network_interface.nic1.id]
 }
