@@ -48,10 +48,13 @@ resource "azurerm_network_interface" "nic1" {
 }
 
 resource "azurerm_virtual_machine" "vm1" {
-  name                  = "vm1"
-  resource_group_name   = data.azurerm_resource_group.existing.name
-  location              = data.azurerm_resource_group.existing.location
-  network_interface_ids = [azurerm_network_interface.nic1.id]
+  name                          = "vm1"
+  resource_group_name           = data.azurerm_resource_group.existing.name
+  location                      = data.azurerm_resource_group.existing.location
+  network_interface_ids          = [azurerm_network_interface.nic1.id]
+  computer_name                  = "vm1"
+  admin_username                 = "azureuser"
+  admin_password                 = "Manolita3232"
 
   vm_size = "Standard_B2s"
 
@@ -67,12 +70,6 @@ resource "azurerm_virtual_machine" "vm1" {
     offer     = "UbuntuServer"
     sku       = "16.04-LTS"
     version   = "latest"
-  }
-
-  os_profile {
-    computer_name  = azurerm_virtual_machine.vm1.name
-    admin_username = "azureuser"
-    admin_password = "Manolita3232"
   }
 
   os_profile_linux_config {
