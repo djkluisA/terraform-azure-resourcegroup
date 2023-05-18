@@ -1,50 +1,52 @@
 
 provider "azurerm" {
-  skip_provider_registration = true
   features {}
+  skip_provider_registration = true
 }
 
-data "azurerm_resource_group" "playground" {
+data "azurerm_resource_group" "rg" {
   name = "1-a21e6146-playground-sandbox"
 }
 
-resource "azurerm_virtual_network" "vnet1" {
+resource "azurerm_virtual_network" "vnet" {
   name                = "vnet1"
   address_space       = ["10.0.0.0/8"]
-  location            = data.azurerm_resource_group.playground.location
-  resource_group_name = data.azurerm_resource_group.playground.name
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
 }
 
-resource "azurerm_subnet" "sbnet1" {
-  name           = "sbnet1"
-  resource_group_name = data.azurerm_resource_group.playground.name
-  virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes = ["10.0.0.0/16"]
+resource "azurerm_subnet" "sbnet" {
+  name                 = "sbnet1"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet.name
+  address_prefixes     = ["10.0.0.0/16"]
 }
 
-resource "azurerm_network_interface" "nic1" {
+resource "azurerm_network_interface" "nic" {
   name                = "nic1"
-  location            = data.azurerm_resource_group.playground.location
-  resource_group_name = data.azurerm_resource_group.playground.name
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
 
   ip_configuration {
-    name                          = "ipconfig1"
-    subnet_id                     = azurerm_subnet.sbnet1.id
-    private_ip_address_allocation = "Static"
+    name                          = "config1"
+    subnet_id                     = azurerm_subnet.sbnet.id
     private_ip_address            = "10.0.0.7"
+    private_ip_address_allocation = "static"
   }
 }
 
-resource "azurerm_linux_virtual_machine" "vm1" {
+resource "azurerm_linux_virtual_machine" "vm" {
   name                = "vm1"
-  location            = data.azurerm_resource_group.playground.location
-  resource_group_name = data.azurerm_resource_group.playground.name
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
   size                = "Standard_B2s"
+
+  network_interface_ids = [azurerm_network_interface.nic.id]
 
   source_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
-    sku       = "16.04-LTS"
+    sku       = "18.04-LTS"
     version   = "latest"
   }
 
@@ -54,11 +56,7 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     storage_account_type = "Standard_LRS"
   }
 
-  admin_username = "azureuser"
-  admin_password = "Manolita3232"
+  admin_username              = "azureuser"
+  admin_password              = "Manolita3232"
   disable_password_authentication = false
-
-  network_interface_ids = [
-    azurerm_network_interface.nic1.id
-  ]
 }
