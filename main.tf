@@ -69,6 +69,7 @@ resource "azurerm_subnet" "sbnet1" {
 resource "azurerm_network_interface" "nic1" {
   name                = "nic1"
   resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.rg.location
 
   ip_configuration {
     name                          = "ipconfig1"
