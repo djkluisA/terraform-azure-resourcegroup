@@ -133,3 +133,11 @@ variable "address_space" {}
 variable "address_prefixes" {}
 
 variable "private_ip_address" {}
+
+variable "location" {
+  default = "eastus"
+}
+
+variable "rg_name" {
+  default = "1-3baf3667-playground-sandbox"
+}
