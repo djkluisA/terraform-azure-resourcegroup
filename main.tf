@@ -1,7 +1,7 @@
 
 provider "azurerm" {
-  features {}
   skip_provider_registration = true
+  features {}
 }
 
 data "azurerm_resource_group" "example" {
@@ -47,7 +47,7 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   location            = data.azurerm_resource_group.example.location
   size                = "Standard_B2s"
 
-  storage_os_disk {
+  os_disk {
     name              = "${azurerm_linux_virtual_machine.vm1.name}-osdisk"
     caching           = "ReadWrite"
     storage_account_type = "Standard_LRS"
@@ -60,7 +60,7 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     disable_password_authentication = false
   }
 
-  source_image_reference {
+  storage_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
     sku       = "18.04-LTS"
