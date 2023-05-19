@@ -1,4 +1,5 @@
-Provider "azurerm" {
+
+provider "azurerm" {
   features {}
   skip_provider_registration = true
 }
@@ -101,7 +102,7 @@ resource "azurerm_linux_virtual_machine" "vm1" {
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = module.key_vault.secret["public-clave"]
+    public_key = module.key_vault.secrets["public-clave"]
   }
 
   depends_on = [
