@@ -125,3 +125,9 @@ resource "azurerm_key_vault_secret" "kvaultmv1_secret_clave" {
     azurerm_key_vault.kvaultmv1
   ]
 }
+
+variable "address_space" {}
+
+variable "address_prefixes" {}
+
+variable "private_ip_address" {}
