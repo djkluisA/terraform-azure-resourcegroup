@@ -1,5 +1,4 @@
-
-provider "azurerm" {
+Provider "azurerm" {
   features {}
   skip_provider_registration = true
 }
@@ -110,9 +109,3 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     module.key_vault,
   ]
 }
-
-data "azurerm_resource_group" "rg" {
-  name = "1-3baf3667-playground-sandbox"
-}
-
-data "azurerm_client_config" "current" {}
