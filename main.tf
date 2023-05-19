@@ -46,18 +46,18 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   admin_password                 = "Manolita3232"
   disable_password_authentication = false
 
+  storage_os_disk {
+    name              = "${azurerm_linux_virtual_machine.vm1.name}-osdisk"
+    caching           = "ReadWrite"
+    create_option     = "FromImage"
+    managed_disk_type = "Standard_LRS"
+  }
+
   source_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
     sku       = "18.04-LTS"
     version   = "latest"
-  }
-
-  os_disk {
-    name              = "${azurerm_linux_virtual_machine.vm1.name}-osdisk"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
   }
 
   network_interface_ids = [azurerm_network_interface.nic1.id]
