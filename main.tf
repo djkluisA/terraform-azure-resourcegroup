@@ -1,8 +1,7 @@
 
 provider "azurerm" {
-  skip_provider_registration = true
-  
   features {}
+  skip_provider_registration = true
 }
 
 data "azurerm_client_config" "current" {}
@@ -15,14 +14,14 @@ resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
-  address_space       = var.address_space
+  address_space       = ["10.0.0.0/16"]
 }
 
 resource "azurerm_subnet" "sbnet1" {
   name                 = "sbnet1"
   resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = var.address_prefixes
+  address_prefixes     = ["10.0.1.0/24"]
 }
 
 resource "azurerm_network_interface" "nic1" {
@@ -33,7 +32,7 @@ resource "azurerm_network_interface" "nic1" {
   ip_configuration {
     name                          = "ipconfig1"
     subnet_id                     = azurerm_subnet.sbnet1.id
-    private_ip_address           = var.private_ip_address
+    private_ip_address           = "10.0.1.10"
     private_ip_address_allocation = "Static"
   }
 }
@@ -46,9 +45,9 @@ resource "tls_private_key" "keypair" {
 module "key_vault" {
   source = "Azure/keyvault/azurerm"
 
-  name = "kvaultmv1"
-  sku_name = "standard"
-  tenant_id = data.azurerm_client_config.current.tenant_id
+  name       = "kvaultmv1"
+  sku_name   = "standard"
+  tenant_id  = data.azurerm_client_config.current.tenant_id
   
   network_acls {
     default_action = "Deny"
@@ -59,6 +58,7 @@ module "key_vault" {
   access_policy {
     tenant_id = data.azurerm_client_config.current.tenant_id
     object_id = data.azurerm_client_config.current.object_id
+    
     secret_permissions = [
       "Get",
       "List",
@@ -85,14 +85,14 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   resource_group_name = data.azurerm_resource_group.rg.name
   size                = "Standard_B2s"
 
+  admin_username = "azureuser"
+
   source_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
     sku       = "18.04-LTS"
     version   = "latest"
   }
-
-  admin_username = "azureuser"
 
   os_disk {
     name              = "osdisk1"
@@ -116,10 +116,3 @@ data "azurerm_resource_group" "rg" {
 }
 
 data "azurerm_client_config" "current" {}
-
-variable "address_space" {}
-
-variable "address_prefixes" {}
-
-variable "private_ip_address" {}
-
