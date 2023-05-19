@@ -109,8 +109,16 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   }
 }
 
+data "azurerm_subscription" "current" {}
+
+data "azurerm_resource_group" "current" {
+  name = data.azurerm_resource_group.sandbox.name
+}
+
 variable "address_space" {}
+
 variable "address_prefixes" {}
+
 variable "private_ip_address" {}
 
  {
@@ -121,5 +129,6 @@ variable "private_ip_address" {}
       features {}
     }
   }
+
   required_version = ">= 1.0.0"
 }
