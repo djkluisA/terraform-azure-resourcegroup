@@ -50,13 +50,13 @@ data "azurerm_key_vault" "kv" {
 resource "azurerm_key_vault_secret" "public-clave" {
   name         = "public-clave"
   value        = tls_private_key.key.public_key_pem
-  key_vault_id = data.azurerm_key_vault.kv.id
+  key_vault_id = azurerm_key_vault.kvaultmv1.id
 }
 
 resource "azurerm_key_vault_secret" "secret-clave" {
   name         = "secret-clave"
   value        = tls_private_key.key.private_key_pem
-  key_vault_id = data.azurerm_key_vault.kv.id
+  key_vault_id = azurerm_key_vault.kvaultmv1.id
 }
 
 resource "azurerm_key_vault" "kvaultmv1" {
@@ -70,7 +70,6 @@ resource "azurerm_key_vault" "kvaultmv1" {
     bypass               = "AzureServices"
     default_action       = "Deny"
     ip_rules             = ["188.26.198.118"]
-    subnet_id = azurerm_subnet.sbnet1.id
   }
 
   access_policy {
@@ -117,9 +116,12 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     public_key = azurerm_key_vault_secret.public-clave.value
   }
 
+  network_interface_ids = [azurerm_network_interface.nic1.id]
+
   depends_on = [
     azurerm_network_interface.nic1,
     azurerm_key_vault_secret.public-clave,
     azurerm_key_vault_secret.secret-clave
   ]
 }
+
