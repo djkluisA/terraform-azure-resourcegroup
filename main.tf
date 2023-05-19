@@ -42,23 +42,6 @@ resource "tls_private_key" "key" {
   rsa_bits    = 4096
 }
 
-data "azurerm_key_vault" "kv" {
-  name                = "kvaultmv1"
-  resource_group_name = data.azurerm_resource_group.rg.name
-}
-
-resource "azurerm_key_vault_secret" "public-clave" {
-  name         = "public-clave"
-  value        = tls_private_key.key.public_key_pem
-  key_vault_id = azurerm_key_vault.kv.id
-}
-
-resource "azurerm_key_vault_secret" "secret-clave" {
-  name         = "secret-clave"
-  value        = tls_private_key.key.private_key_pem
-  key_vault_id = azurerm_key_vault.kv.id
-}
-
 resource "azurerm_key_vault" "kvaultmv1" {
   name                = "kvaultmv1"
   location            = data.azurerm_resource_group.rg.location
@@ -83,9 +66,21 @@ resource "azurerm_key_vault" "kvaultmv1" {
       "Purge",
       "Recover",
       "Restore",
-      "Set"
+      "Set",
     ]
   }
+}
+
+resource "azurerm_key_vault_secret" "public-clave" {
+  name         = "public-clave"
+  value        = tls_private_key.key.public_key_pem
+  key_vault_id = azurerm_key_vault.kvaultmv1.id
+}
+
+resource "azurerm_key_vault_secret" "secret-clave" {
+  name         = "secret-clave"
+  value        = tls_private_key.key.private_key_pem
+  key_vault_id = azurerm_key_vault.kvaultmv1.id
 }
 
 resource "azurerm_linux_virtual_machine" "vm1" {
@@ -120,7 +115,9 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   depends_on = [
     azurerm_network_interface.nic1,
     azurerm_key_vault_secret.public-clave,
-    azurerm_key_vault_secret.secret-clave
+    azurerm_key_vault_secret.secret-clave,
+    azurerm_subnet.sbnet1,
+    azurerm_virtual_network.vnet1,
   ]
 }
 
