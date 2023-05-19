@@ -1,6 +1,5 @@
 
 provider "azurerm" {
-  skip_provider_registration = true
   features {}
 }
 
@@ -53,11 +52,12 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   resource_group_name   = data.azurerm_resource_group.sandbox.name
   size                  = "Standard_B2s"
  
-  storage_os_disk {
+  os_disk {
     name              = "${azurerm_linux_virtual_machine.vm1.name}-osdisk"
     caching           = "ReadWrite"
     create_option     = "FromImage"
     managed_disk_type = "Standard_LRS"
+    storage_account_type = "Standard_LRS"
   }
 
   storage_data_disk {
@@ -66,13 +66,7 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     create_option   = "Empty"
     managed_disk_type = "Standard_LRS"
     lun             = 0
-  }
-
-  os_disk {
-    name              = "${azurerm_linux_virtual_machine.vm1.name}-osdisk"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
+    storage_account_type = "Standard_LRS"
   }
 
   source_image_reference {
@@ -94,6 +88,7 @@ resource "azurerm_linux_virtual_machine" "vm1" {
 
   os_profile {
     computer_name  = azurerm_linux_virtual_machine.vm1.name
+    admin_username = "azureuser"
   }
 
   os_profile_linux_config {
