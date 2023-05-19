@@ -96,22 +96,32 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   resource_group_name = data.azurerm_resource_group.test.name
   size                = "Standard_B2s"
 
-  storage_image_reference {
-    id = data.azurerm_image.ubuntu.id
+  storage_os_disk {
+    name                 = "os_disk"
+    caching              = "ReadWrite"
+    create_option        = "FromImage"
+    managed_disk_type    = "Standard_LRS"
   }
 
   admin_username = "azureuser"
 
-  os_disk {
-    name                 = "os_disk"
-    caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"
+  os_profile {
+    computer_name  = "vm1"
+    admin_username = "azureuser"
+    admin_ssh_key {
+      username   = "azureuser"
+      public_key = azurerm_key_vault_secret.public-clave.value
+    }
   }
 
-  admin_ssh_key {
-    username = "azureuser"
-    public_key = azurerm_key_vault_secret.public-clave.value
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "16.04.0-LTS"
+    version   = "latest"
   }
+
+  network_interface_ids = [azurerm_network_interface.nic1.id]
 }
 
 variable "address_space" {}
