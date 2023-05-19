@@ -1,31 +1,44 @@
 
 provider "azurerm" {
   skip_provider_registration = true
-  features {}
-}
 
-data "azurerm_resource_group" "sandbox" {
-  name = "1-3baf3667-playground-sandbox"
+  features {}
 }
 
 data "azurerm_client_config" "current" {}
 
+data "azurerm_resource_group" "rg" {
+  name = "1-3baf3667-playground-sandbox"
+}
+
+resource "tls_private_key" "key" {
+  algorithm   = "RSA"
+  rsa_bits    = 4096
+
+  depends_on = [
+    data.azurerm_client_config.current,
+    data.azurerm_resource_group.rg
+  ]
+}
+
 resource "azurerm_key_vault" "kvaultmv1" {
   name                = "kvaultmv1"
-  location            = data.azurerm_resource_group.sandbox.location
-  resource_group_name = data.azurerm_resource_group.sandbox.name
+  resource_group_name = data.azurerm_resource_group.rg.name
   tenant_id           = data.azurerm_client_config.current.tenant_id
   sku_name            = "standard"
 
   network_acls {
     default_action = "Deny"
-    bypass         = "AzureServices"
-    ip_rules       = ["188.26.198.118"]
+
+    bypass       = "AzureServices"
+    ip_rules     = ["188.26.198.118"]
   }
 
   access_policy {
-    tenant_id        = data.azurerm_client_config.current.tenant_id
-    object_id        = data.azurerm_client_config.current.object_id
+    tenant_id = data.azurerm_client_config.current.tenant_id
+
+    object_id = data.azurerm_client_config.current.object_id
+
     secret_permissions = [
       "Get",
       "List",
@@ -34,60 +47,43 @@ resource "azurerm_key_vault" "kvaultmv1" {
       "Recover",
       "Backup",
       "Restore",
-      "Purge",
+      "Purge"
     ]
   }
 }
 
-resource "tls_private_key" "key" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
-}
-
-resource "azurerm_key_vault_secret" "public_key" {
-  name         = "public-clave"
-  value        = tls_private_key.key.public_key_openssh
-  key_vault_id = azurerm_key_vault.kvaultmv1.id
-}
-
-resource "azurerm_key_vault_secret" "secret_key" {
-  name         = "secret-clave"
-  value        = tls_private_key.key.private_key_pem
-  key_vault_id = azurerm_key_vault.kvaultmv1.id
-}
-
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
-  location            = data.azurerm_resource_group.sandbox.location
-  resource_group_name = data.azurerm_resource_group.sandbox.name
+  resource_group_name = data.azurerm_resource_group.rg.name
   address_space       = var.address_space
 }
 
 resource "azurerm_subnet" "sbnet1" {
   name                 = "sbnet1"
-  resource_group_name  = data.azurerm_resource_group.sandbox.name
+  resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet1.name
   address_prefixes     = var.address_prefixes
 }
 
 resource "azurerm_network_interface" "nic1" {
   name                = "nic1"
-  location            = data.azurerm_resource_group.sandbox.location
-  resource_group_name = data.azurerm_resource_group.sandbox.name
+  resource_group_name = data.azurerm_resource_group.rg.name
 
   ip_configuration {
     name                          = "ipconfig1"
     subnet_id                     = azurerm_subnet.sbnet1.id
-    private_ip_address_allocation = "Static"
     private_ip_address            = var.private_ip_address
+    private_ip_address_allocation = "Static"
   }
 }
 
 resource "azurerm_linux_virtual_machine" "vm1" {
   name                  = "vm1"
-  location              = data.azurerm_resource_group.sandbox.location
-  resource_group_name   = data.azurerm_resource_group.sandbox.name
+  resource_group_name   = data.azurerm_resource_group.rg.name
+  location              = data.azurerm_resource_group.rg.location
   size                  = "Standard_B2s"
+  admin_username        = "azureuser"
+  network_interface_ids = [azurerm_network_interface.nic1.id]
 
   source_image_reference {
     publisher = "Canonical"
@@ -96,39 +92,36 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     version   = "latest"
   }
 
-  admin_username = "azureuser"
-
   os_disk {
-    name                 = "vm1-os-disk"
+    name              = "osdisk1"
+    caching           = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
 
   admin_ssh_key {
-    username  = "azureuser"
-    public_key = azurerm_key_vault_secret.public_key.id
+    username = "azureuser"
+    public_key = azurerm_key_vault_secret.kvaultmv1_public_clave.value
   }
 }
 
-data "azurerm_subscription" "current" {}
+resource "azurerm_key_vault_secret" "kvaultmv1_public_clave" {
+  name         = "public-clave"
+  value        = tls_private_key.key.public_key_openssh
+  key_vault_id = azurerm_key_vault.kvaultmv1.id
 
-data "azurerm_resource_group" "current" {
-  name = data.azurerm_resource_group.sandbox.name
+  depends_on = [
+    tls_private_key.key,
+    azurerm_key_vault.kvaultmv1
+  ]
 }
 
-variable "address_space" {}
+resource "azurerm_key_vault_secret" "kvaultmv1_secret_clave" {
+  name         = "secret-clave"
+  value        = tls_private_key.key.private_key_pem
+  key_vault_id = azurerm_key_vault.kvaultmv1.id
 
-variable "address_prefixes" {}
-
-variable "private_ip_address" {}
-
- {
-  required_providers {
-    azurerm = {
-      source = "hashicorp/azurerm"
-      version = "~> 2.0"
-      features {}
-    }
-  }
-
-  required_version = ">= 1.0.0"
+  depends_on = [
+    tls_private_key.key,
+    azurerm_key_vault.kvaultmv1
+  ]
 }
