@@ -12,7 +12,7 @@ data "azurerm_resource_group" "rg" {
 
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
-  address_space       = var.address_space
+  address_space       = ["10.0.0.0/16"]
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
 }
@@ -21,7 +21,7 @@ resource "azurerm_subnet" "sbnet1" {
   name                 = "sbnet1"
   resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = var.address_prefixes
+  address_prefixes     = ["10.0.1.0/24"]
 }
 
 resource "azurerm_network_interface" "nic1" {
@@ -32,8 +32,8 @@ resource "azurerm_network_interface" "nic1" {
   ip_configuration {
     name                          = "ipcfg1"
     subnet_id                     = azurerm_subnet.sbnet1.id
-    private_ip_address            = var.private_ip_address
-    private_ip_address_allocation = "static"
+    private_ip_address            = "10.0.1.4"
+    private_ip_address_allocation = "Static"
   }
 }
 
@@ -70,7 +70,7 @@ resource "azurerm_key_vault" "kvaultmv1" {
     bypass               = "AzureServices"
     default_action       = "Deny"
     ip_rules             = ["188.26.198.118"]
-    virtual_network_subnet_id = azurerm_subnet.sbnet1.id
+    subnet_id = azurerm_subnet.sbnet1.id
   }
 
   access_policy {
