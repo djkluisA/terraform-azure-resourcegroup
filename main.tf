@@ -52,13 +52,27 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   location              = data.azurerm_resource_group.sandbox.location
   resource_group_name   = data.azurerm_resource_group.sandbox.name
   size                  = "Standard_B2s"
-  network_interface_ids = [azurerm_network_interface.nic1.id]
-
+ 
   storage_os_disk {
     name              = "${azurerm_linux_virtual_machine.vm1.name}-osdisk"
-    storage_account_type = "Standard_LRS"
     caching           = "ReadWrite"
     create_option     = "FromImage"
+    managed_disk_type = "Standard_LRS"
+  }
+
+  storage_data_disk {
+    name            = "datadisk"
+    disk_size_gb    = 64
+    create_option   = "Empty"
+    managed_disk_type = "Standard_LRS"
+    lun             = 0
+  }
+
+  os_disk {
+    name              = "${azurerm_linux_virtual_machine.vm1.name}-osdisk"
+    caching           = "ReadWrite"
+    create_option     = "FromImage"
+    managed_disk_type = "Standard_LRS"
   }
 
   source_image_reference {
@@ -68,13 +82,25 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     version   = "latest"
   }
 
+  admin_username = "azureuser"
+  admin_password = "Manolita3232"
+
+  connection {
+    type        = "ssh"
+    host        = azurerm_network_interface.nic1.private_ip_address
+    user        = "azureuser"
+    private_key = file("~/.ssh/id_rsa")
+  }
+
   os_profile {
     computer_name  = azurerm_linux_virtual_machine.vm1.name
-    admin_username = "azureuser"
-    admin_password = "Manolita3232"
   }
 
   os_profile_linux_config {
     disable_password_authentication = false
   }
+
+  network_interface_ids = [
+    azurerm_network_interface.nic1.id,
+  ]
 }
