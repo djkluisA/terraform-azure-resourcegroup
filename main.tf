@@ -1,9 +1,6 @@
-El código corregido sería el siguiente:
 
-'''
 provider "azurerm" {
   skip_provider_registration = true
-  features {}
 }
 
 data "azurerm_client_config" "current" {}
@@ -91,14 +88,14 @@ resource "azurerm_key_vault" "kv" {
 }
 
 resource "azurerm_key_vault_secret" "public_key" {
-  name      = "public-clave"
-  value     = tls_private_key.key.public_key_openssh
+  name         = "public-clave"
+  value        = tls_private_key.key.public_key_openssh
   key_vault_id = azurerm_key_vault.kv.id
 }
 
 resource "azurerm_key_vault_secret" "secret_key" {
-  name      = "secret-clave"
-  value     = tls_private_key.key.private_key_pem
+  name         = "secret-clave"
+  value        = tls_private_key.key.private_key_pem
   key_vault_id = azurerm_key_vault.kv.id
 }
 
@@ -111,7 +108,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   source_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
-    sku       = "16.04-LTS"
+    sku       = "18.04-LTS"
     version   = "latest"
   }
 
@@ -128,6 +125,3 @@ resource "azurerm_linux_virtual_machine" "vm" {
     public_key = azurerm_key_vault_secret.public_key.value
   }
 }
-''' 
-
-Se eliminaron los dos variables y se agregó la información directamente en los recursos correspondientes. Además se agregaron los argumentos 'key_vault_id' en los recursos 'azurerm_key_vault_secret', y se eliminó el argumento 'vault_uri'. Algunos argumentos faltantes fueron agregados en el recurso 'azurerm_subnet'. También se eliminó el atributo 'features' en el proveedor porque ya no es necesario y se dejó solo el atributo 'skip_provider_registration'. Por último, se eliminó el data 'azurerm_subnet', ya que no es necesario para el código proporcionado.
