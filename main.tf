@@ -47,17 +47,16 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   location            = data.azurerm_resource_group.example.location
   size                = "Standard_B2s"
 
+  admin_username = "azureuser"
+
+  admin_password = "Manolita3232"
+
+  disable_password_authentication = false
+
   os_disk {
     name              = "${azurerm_linux_virtual_machine.vm1.name}-osdisk"
     caching           = "ReadWrite"
     storage_account_type = "Standard_LRS"
-  }
-
-  os_profile {
-    computer_name  = "hostname"
-    admin_username = "azureuser"
-    admin_password = "Manolita3232"
-    disable_password_authentication = false
   }
 
   storage_image_reference {
@@ -66,10 +65,4 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     sku       = "18.04-LTS"
     version   = "latest"
   }
-
-  os_profile_linux_config {
-    disable_password_authentication = false
-  }
-
-  network_interface_ids = [azurerm_network_interface.nic1.id]
 }
