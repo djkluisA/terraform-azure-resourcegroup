@@ -12,7 +12,7 @@ data "azurerm_resource_group" "rg" {
 
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
-  address_space       = var.address_space
+  address_space       = ["10.0.0.0/16"]
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
 }
@@ -21,7 +21,7 @@ resource "azurerm_subnet" "sbnet1" {
   name                 = "sbnet1"
   resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = var.address_prefixes
+  address_prefixes     = ["10.0.1.0/24"]
 }
 
 resource "azurerm_network_interface" "nic1" {
@@ -32,7 +32,7 @@ resource "azurerm_network_interface" "nic1" {
   ip_configuration {
     name                          = "nic1-ipconfig1"
     subnet_id                     = azurerm_subnet.sbnet1.id
-    private_ip_address            = var.private_ip_address
+    private_ip_address            = "10.0.1.4"
     private_ip_address_allocation = "Static"
   }
 }
@@ -116,10 +116,6 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     username   = "azureuser"
     public_key = azurerm_key_vault_secret.public_key.value
   }
+
+  network_interface_ids = [azurerm_network_interface.nic1.id]
 }
-
-variable "address_space" {}
-
-variable "address_prefixes" {}
-
-variable "private_ip_address" {}
