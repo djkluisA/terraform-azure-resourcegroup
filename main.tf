@@ -1,62 +1,119 @@
 
 provider "azurerm" {
-  features {}
   skip_provider_registration = true
+  features {}
 }
 
-data "azurerm_resource_group" "example" {
-  name = "1-3baf3667-playground-sandbox"
+data "azurerm_client_config" "current" {}
+
+variable "address_space" {}
+variable "address_prefixes" {}
+variable "private_ip_address" {}
+
+resource "azurerm_resource_group" "rg" {
+  name     = "1-3baf3667-playground-sandbox"
+  location = "eastus"
 }
 
-variable "address_space" {
-  default = ["10.0.0.0/16"]
-}
-
-variable "address_prefixes" {
-  default = ["10.0.1.0/24"]
-}
-
-variable "private_ip_address" {
-  default = "10.0.1.4"
-}
-
-resource "azurerm_virtual_network" "example" {
+resource "azurerm_virtual_network" "vnet" {
   name                = "vnet1"
-  location            = data.azurerm_resource_group.example.location
-  resource_group_name = data.azurerm_resource_group.example.name
   address_space       = var.address_space
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
 }
 
-resource "azurerm_subnet" "example" {
+resource "azurerm_subnet" "sbnet" {
   name                 = "sbnet1"
-  resource_group_name  = data.azurerm_resource_group.example.name
-  virtual_network_name = azurerm_virtual_network.example.name
+  resource_group_name  = azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet.name
   address_prefixes     = var.address_prefixes
 }
 
-resource "azurerm_network_interface" "example" {
+resource "azurerm_network_interface" "nic" {
   name                = "nic1"
-  location            = data.azurerm_resource_group.example.location
-  resource_group_name = data.azurerm_resource_group.example.name
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
 
   ip_configuration {
-    name                          = "ipconfig1"
-    subnet_id                     = azurerm_subnet.example.id
+    name                          = "config1"
+    subnet_id                     = azurerm_subnet.sbnet.id
     private_ip_address            = var.private_ip_address
     private_ip_address_allocation = "Static"
+    primary                       = true
   }
 }
 
-resource "azurerm_linux_virtual_machine" "example" {
+resource "tls_private_key" "key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+
+  depends_on = [
+    azurerm_resource_group.rg
+  ]
+}
+
+resource "azurerm_key_vault" "kv" {
+  name                = "kvaultmv1"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+
+  sku_name = "standard"
+
+  network_acls {
+    default_action = "Deny"
+
+    bypass = "AzureServices"
+
+    ip_rules = [
+      "188.26.198.118"
+    ]
+  }
+
+  access_policy {
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = data.azurerm_client_config.current.object_id
+
+    secret_permissions = [
+      "Get",
+      "List",
+      "Set",
+      "Delete",
+      "Recover",
+      "Backup",
+      "Restore",
+      "Purge"
+    ]
+  }
+
+  lifecycle {
+    ignore_changes = [
+      "access_policy"
+    ]
+  }
+}
+
+resource "azurerm_key_vault_secret" "public_key" {
+  name      = "public-clave"
+  value     = tls_private_key.key.public_key_openssh
+  vault_uri = azurerm_key_vault.kv.vault_uri
+}
+
+resource "azurerm_key_vault_secret" "secret_key" {
+  name      = "secret-clave"
+  value     = tls_private_key.key.private_key_pem
+  vault_uri = azurerm_key_vault.kv.vault_uri
+}
+
+resource "azurerm_linux_virtual_machine" "vm" {
   name                = "vm1"
-  resource_group_name = data.azurerm_resource_group.example.name
-  location            = data.azurerm_resource_group.example.location
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
   size                = "Standard_B2s"
 
   source_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
+    sku       = "16.04-LTS"
     version   = "latest"
   }
 
@@ -66,9 +123,10 @@ resource "azurerm_linux_virtual_machine" "example" {
     storage_account_type = "Standard_LRS"
   }
 
-  admin_username                 = "azureuser"
-  admin_password                 = "Manolita3232"
-  disable_password_authentication = false
+  admin_username = "azureuser"
 
-  network_interface_ids = [azurerm_network_interface.example.id]
+  admin_ssh_key {
+    username   = "azureuser"
+    public_key = azurerm_key_vault_secret.public_key.value
+  }
 }
