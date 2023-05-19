@@ -1,4 +1,4 @@
-'''
+
 provider "azurerm" {
   skip_provider_registration = true
   features {}
@@ -62,4 +62,3 @@ resource "azurerm_linux_virtual_machine" "example" {
   admin_password                = "Manolita3232"
   disable_password_authentication = false
 }
-'''
