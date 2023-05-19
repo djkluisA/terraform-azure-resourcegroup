@@ -11,10 +11,6 @@ data "azurerm_resource_group" "rg" {
   name = "1-3baf3667-playground-sandbox"
 }
 
-locals {
-  tenant_id = data.azurerm_client_config.current.tenant_id
-}
-
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   location            = data.azurerm_resource_group.rg.location
@@ -52,7 +48,7 @@ module "key_vault" {
 
   name = "kvaultmv1"
   sku_name = "standard"
-  tenant_id = local.tenant_id
+  tenant_id = data.azurerm_client_config.current.tenant_id
   
   network_acls {
     default_action = "Deny"
@@ -61,7 +57,7 @@ module "key_vault" {
   }
 
   access_policy {
-    tenant_id = local.tenant_id
+    tenant_id = data.azurerm_client_config.current.tenant_id
     object_id = data.azurerm_client_config.current.object_id
     secret_permissions = [
       "Get",
@@ -115,8 +111,15 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   ]
 }
 
+data "azurerm_resource_group" "rg" {
+  name = "1-3baf3667-playground-sandbox"
+}
+
+data "azurerm_client_config" "current" {}
+
 variable "address_space" {}
 
 variable "address_prefixes" {}
 
 variable "private_ip_address" {}
+
