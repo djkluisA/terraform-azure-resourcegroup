@@ -10,11 +10,6 @@ data "azurerm_resource_group" "rg" {
   name = "1-3baf3667-playground-sandbox"
 }
 
-resource "azurerm_tls_private_key" "tls_key" {
-  algorithm = "RSA"
-  size      = 4096
-}
-
 resource "azurerm_key_vault" "key_vault" {
   name                         = "kvaultmv1"
   location                     = data.azurerm_resource_group.rg.location
@@ -52,6 +47,7 @@ resource "azurerm_virtual_network" "virtual_network" {
   name                = "vnet1"
   address_space       = var.address_space
   resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.rg.location
 }
 
 resource "azurerm_subnet" "subnet" {
@@ -113,6 +109,13 @@ resource "azurerm_key_vault_secret" "private_key" {
   key_vault_id = azurerm_key_vault.key_vault.id
 }
 
+resource "azurerm_tls_private_key" "tls_key" {
+  algorithm = "RSA"
+  size      = 4096
+}
+
 variable "address_space" {}
+
 variable "address_prefixes" {}
+
 variable "private_ip_address" {}
