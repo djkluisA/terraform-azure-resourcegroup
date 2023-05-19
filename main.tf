@@ -1,6 +1,7 @@
 
 provider "azurerm" {
   features {}
+  skip_provider_registration = true
 }
 
 data "azurerm_resource_group" "sandbox" {
@@ -55,21 +56,11 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   os_disk {
     name              = "${azurerm_linux_virtual_machine.vm1.name}-osdisk"
     caching           = "ReadWrite"
+    storage_account_type = "Standard_LRS"
     create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
-    storage_account_type = "Standard_LRS"
   }
 
-  storage_data_disk {
-    name            = "datadisk"
-    disk_size_gb    = 64
-    create_option   = "Empty"
-    managed_disk_type = "Standard_LRS"
-    lun             = 0
-    storage_account_type = "Standard_LRS"
-  }
-
-  source_image_reference {
+  storage_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
     sku       = "18.04-LTS"
@@ -89,13 +80,11 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   os_profile {
     computer_name  = azurerm_linux_virtual_machine.vm1.name
     admin_username = "azureuser"
+
+    linux_configuration {
+      disable_password_authentication = true
+    }
   }
 
-  os_profile_linux_config {
-    disable_password_authentication = false
-  }
-
-  network_interface_ids = [
-    azurerm_network_interface.nic1.id,
-  ]
+  network_interface_ids = [azurerm_network_interface.nic1.id]
 }
