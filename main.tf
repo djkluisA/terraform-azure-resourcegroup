@@ -1,7 +1,7 @@
 
 provider "azurerm" {
-  skip_provider_registration = true
   features {}
+  skip_provider_registration = true
 }
 
 data "azurerm_resource_group" "example" {
@@ -11,6 +11,8 @@ data "azurerm_resource_group" "example" {
 variable "address_space" {}
 
 variable "address_prefixes" {}
+
+variable "private_ip_address" {}
 
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
