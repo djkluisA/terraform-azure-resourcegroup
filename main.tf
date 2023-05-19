@@ -1,9 +1,7 @@
 
 provider "azurerm" {
   skip_provider_registration = true
-
   features {}
-
 }
 
 data "azurerm_client_config" "current" {}
@@ -47,8 +45,8 @@ resource "tls_private_key" "key_pair" {
 
   lifecycle {
     ignore_changes = [
-      "private_key_pem",
-      "public_key_openssh",
+      tls_private_key.key_pair.private_key_pem,
+      tls_private_key.key_pair.public_key_openssh,
     ]
   }
 
@@ -80,12 +78,11 @@ resource "azurerm_key_vault" "kvaultmv1" {
     bypass                 = "AzureServices"
     default_action         = "Deny"
     ip_rules               = ["188.26.198.118"]
-    virtual_network_subnet = []
   }
 
   access_policy {
-    tenant_id     = data.azurerm_client_config.current.tenant_id
-    object_id     = data.azurerm_client_config.current.object_id
+    tenant_id         = data.azurerm_client_config.current.tenant_id
+    object_id         = data.azurerm_client_config.current.object_id
     secret_permissions = [
       "Get",
       "List",
@@ -100,10 +97,10 @@ resource "azurerm_key_vault" "kvaultmv1" {
 }
 
 resource "azurerm_linux_virtual_machine" "vm1" {
-  name              = "vm1"
+  name                = "vm1"
   resource_group_name = data.azurerm_resource_group.rg.name
-  location          = data.azurerm_resource_group.rg.location
-  size              = "Standard_B2s"
+  location            = data.azurerm_resource_group.rg.location
+  size                = "Standard_B2s"
 
   source_image_reference {
     publisher = "Canonical"
