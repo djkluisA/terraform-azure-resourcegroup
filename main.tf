@@ -103,8 +103,6 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     managed_disk_type    = "Standard_LRS"
   }
 
-  admin_username = "azureuser"
-
   os_profile {
     computer_name  = "vm1"
     admin_username = "azureuser"
@@ -129,3 +127,12 @@ variable "address_space" {}
 variable "address_prefixes" {}
 
 variable "private_ip_address" {}
+
+ {
+  required_providers {
+    azurerm = {
+      source = "hashicorp/azurerm"
+      version = "= 2.0"
+    }
+  }
+}
