@@ -1,121 +1,127 @@
 
 provider "azurerm" {
-  skip_provider_registration = true
   features {}
+  skip_provider_registration = true
 }
 
 data "azurerm_client_config" "current" {}
 
-data "azurerm_resource_group" "rg" {
+data "azurerm_resource_group" "test" {
   name = "1-3baf3667-playground-sandbox"
 }
 
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
-  address_space       = ["10.0.0.0/16"]
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.test.location
+  resource_group_name = data.azurerm_resource_group.test.name
+  address_space       = var.address_space
 }
 
 resource "azurerm_subnet" "sbnet1" {
-  name                 = "sbnet1"
-  resource_group_name  = data.azurerm_resource_group.rg.name
-  virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = ["10.0.1.0/24"]
+  name                      = "sbnet1"
+  resource_group_name       = data.azurerm_resource_group.test.name
+  virtual_network_name      = azurerm_virtual_network.vnet1.name
+  address_prefixes          = var.address_prefixes
 }
 
 resource "azurerm_network_interface" "nic1" {
-  name                = "nic1"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+  name                      = "nic1"
+  location                  = data.azurerm_resource_group.test.location
+  resource_group_name       = data.azurerm_resource_group.test.name
 
   ip_configuration {
-    name                          = "nic1-ipconfig1"
+    name                          = "config1"
     subnet_id                     = azurerm_subnet.sbnet1.id
-    private_ip_address            = "10.0.1.4"
+    private_ip_address            = var.private_ip_address
     private_ip_address_allocation = "Static"
   }
 }
 
-resource "tls_private_key" "kvault_key_pair" {
+resource "tls_private_key" "key1" {
   algorithm   = "RSA"
   rsa_bits    = 4096
+
+  depends_on = [azurerm_key_vault_secret.public-clave, azurerm_key_vault_secret.secret-clave]
 }
 
 resource "azurerm_key_vault" "kvaultmv1" {
   name                = "kvaultmv1"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.test.location
+  resource_group_name = data.azurerm_resource_group.test.name
   tenant_id           = data.azurerm_client_config.current.tenant_id
-  sku_name            = "standard"
+
+  sku_name = "standard"
 
   network_acls {
-    default_action = "Deny"
-
-    bypass = "AzureServices"
-
-    ip_rules = [
-      "188.26.198.118"
-    ]
+    bypass        = "AzureServices"
+    default_action = "Allow"
+    ip_rules      = ["188.26.198.118"]
   }
 
   access_policy {
     tenant_id = data.azurerm_client_config.current.tenant_id
-
     object_id = data.azurerm_client_config.current.object_id
 
     secret_permissions = [
-      "Get",
-      "List",
-      "Set",
-      "Delete",
-      "Recover",
-      "Backup",
-      "Restore",
-      "Purge"
+      "get",
+      "list",
+      "set",
+      "delete",
+      "recover",
+      "backup",
+      "restore",
+      "purge",
     ]
   }
 }
 
-resource "azurerm_key_vault_secret" "public_key" {
+resource "azurerm_key_vault_secret" "public-clave" {
   name         = "public-clave"
-  value        = tls_private_key.kvault_key_pair.public_key_openssh
+  value        = tls_private_key.key1.public_key_openssh
   key_vault_id = azurerm_key_vault.kvaultmv1.id
 }
 
-resource "azurerm_key_vault_secret" "secret_key" {
+resource "azurerm_key_vault_secret" "secret-clave" {
   name         = "secret-clave"
-  value        = tls_private_key.kvault_key_pair.private_key_pem
+  value        = tls_private_key.key1.private_key_pem
   key_vault_id = azurerm_key_vault.kvaultmv1.id
+}
+
+data "azurerm_compute_image" "ubuntuserver" {
+  offer     = "UbuntuServer"
+  publisher = "Canonical"
+  sku       = "18.04-LTS"
 }
 
 resource "azurerm_linux_virtual_machine" "vm1" {
   name                = "vm1"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.test.location
+  resource_group_name = data.azurerm_resource_group.test.name
   size                = "Standard_B2s"
 
-  disable_password_authentication = true
+  source_image_reference {
+    publisher = data.azurerm_compute_image.ubuntuserver.publisher
+    offer     = data.azurerm_compute_image.ubuntuserver.offer
+    sku       = data.azurerm_compute_image.ubuntuserver.sku
+    version   = "latest"
+  }
 
   admin_username = "azureuser"
 
   os_disk {
-    name              = "vm1-os-disk"
-    caching           = "ReadWrite"
+    name                 = "os_disk"
+    caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
 
-  source_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
-    version   = "latest"
-  }
-
   admin_ssh_key {
-    username   = "azureuser"
-    public_key = azurerm_key_vault_secret.public_key.value
+    username = "azureuser"
+    public_key = azurerm_key_vault_secret.public-clave.value
   }
-
-  network_interface_ids = [azurerm_network_interface.nic1.id]
 }
+
+variable "address_space" { }
+
+variable "address_prefixes" { }
+
+variable "private_ip_address" { }
