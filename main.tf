@@ -1,3 +1,4 @@
+"""
 
 provider "azurerm" {
   skip_provider_registration = true
@@ -11,6 +12,8 @@ data "azurerm_resource_group" "existing" {
 variable "address_space" {}
 
 variable "address_prefixes" {}
+
+variable "private_ip_address" {} # Se agrega la variable faltante
 
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
@@ -61,3 +64,5 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     storage_account_type = "Standard_LRS"
   }
 }
+
+"""
