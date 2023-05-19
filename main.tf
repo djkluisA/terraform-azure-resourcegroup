@@ -1,7 +1,11 @@
 
 provider "azurerm" {
   skip_provider_registration = true
-  features {}
+  features {
+    virtual_machine {
+      delete_os_disk_on_deletion = true
+    }
+  }
 }
 
 data "azurerm_resource_group" "example" {
@@ -53,10 +57,11 @@ resource "azurerm_linux_virtual_machine" "vm1" {
 
   disable_password_authentication = false
 
-  os_disk {
+  storage_os_disk {
     name              = "${azurerm_linux_virtual_machine.vm1.name}-osdisk"
     caching           = "ReadWrite"
-    storage_account_type = "Standard_LRS"
+    create_option     = "FromImage"
+    managed_disk_type = "Standard_LRS"
   }
 
   storage_image_reference {
@@ -65,4 +70,8 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     sku       = "18.04-LTS"
     version   = "latest"
   }
+
+  network_interface_ids = [
+    azurerm_network_interface.nic1.id
+  ]
 }
