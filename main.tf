@@ -1,42 +1,118 @@
 
 provider "azurerm" {
-  skip_provider_registration = true
   features {}
+  skip_provider_registration = true
 }
 
-data "azurerm_resource_group" "example" {
+data "azurerm_client_config" "current" {}
+
+data "azurerm_resource_group" "rg" {
   name = "1-3baf3667-playground-sandbox"
 }
 
-data "azurerm_client_config" "example" {}
+resource "azurerm_tls_private_key" "tls_key" {
+  algorithm = "RSA"
+  size      = 4096
+}
 
-resource "azurerm_virtual_network" "example" {
-  name                = "myvnet"
-  address_space       = var.address_space
-  location            = data.azurerm_resource_group.example.location
-  resource_group_name = data.azurerm_resource_group.example.name
+resource "azurerm_key_vault" "key_vault" {
+  name                         = "kvaultmv1"
+  location                     = data.azurerm_resource_group.rg.location
+  resource_group_name          = data.azurerm_resource_group.rg.name
+  tenant_id                    = data.azurerm_client_config.current.tenant_id
+  sku_name                     = "standard"
 
-  subnet {
-    name           = "mysubnet"
-    address_prefix = var.address_prefixes
+  network_acls {
+    default_action = "Deny"
+
+    bypass = "AzureServices"
+
+    ip_rules = [
+      "188.26.198.118"
+    ]
+  }
+
+  access_policy {
+    tenant_id     = data.azurerm_client_config.current.tenant_id
+    object_id     = data.azurerm_client_config.current.object_id
+    secret_permissions = [
+      "Get",
+      "List",
+      "Set",
+      "Delete",
+      "Recover",
+      "Backup",
+      "Restore",
+      "Purge"
+    ]
   }
 }
 
-resource "azurerm_network_interface" "example" {
-  name                = "my-nic"
-  location            = data.azurerm_resource_group.example.location
-  resource_group_name = data.azurerm_resource_group.example.name
+resource "azurerm_virtual_network" "virtual_network" {
+  name                = "vnet1"
+  address_space       = var.address_space
+  resource_group_name = data.azurerm_resource_group.rg.name
+}
+
+resource "azurerm_subnet" "subnet" {
+  name                 = "sbnet1"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.virtual_network.name
+  address_prefixes     = var.address_prefixes
+}
+
+resource "azurerm_network_interface" "nic" {
+  name                = "nic1"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
 
   ip_configuration {
-    name                          = "myconfig"
-    subnet_id                     = azurerm_virtual_network.example.subnet.id
-    private_ip_address_allocation = "Static"
+    name                          = "ipconfig1"
+    subnet_id                     = azurerm_subnet.subnet.id
     private_ip_address            = var.private_ip_address
+    private_ip_address_allocation = "Static"
   }
+}
+
+resource "azurerm_linux_virtual_machine" "vm" {
+  name                = "vm1"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  size                = "Standard_B2s"
+
+  admin_username = "azureuser"
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "20.04-LTS"
+    version   = "latest"
+  }
+
+  os_disk {
+    name              = "osdisk"
+    caching           = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+
+  admin_ssh_key {
+    username       = "azureuser"
+    public_key     = azurerm_key_vault_secret.public_key.value
+  }
+}
+
+resource "azurerm_key_vault_secret" "public_key" {
+  name         = "public-clave"
+  value        = azurerm_tls_private_key.tls_key.public_key_pem
+  key_vault_id = azurerm_key_vault.key_vault.id
+}
+
+resource "azurerm_key_vault_secret" "private_key" {
+  name         = "secret-clave"
+  value        = azurerm_tls_private_key.tls_key.private_key_pem
+  key_vault_id = azurerm_key_vault.key_vault.id
 }
 
 variable "address_space" {}
-
 variable "address_prefixes" {}
-
 variable "private_ip_address" {}
