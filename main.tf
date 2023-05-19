@@ -50,13 +50,13 @@ data "azurerm_key_vault" "kv" {
 resource "azurerm_key_vault_secret" "public-clave" {
   name         = "public-clave"
   value        = tls_private_key.key.public_key_pem
-  key_vault_id = azurerm_key_vault.kvaultmv1.id
+  key_vault_id = azurerm_key_vault.kv.id
 }
 
 resource "azurerm_key_vault_secret" "secret-clave" {
   name         = "secret-clave"
   value        = tls_private_key.key.private_key_pem
-  key_vault_id = azurerm_key_vault.kvaultmv1.id
+  key_vault_id = azurerm_key_vault.kv.id
 }
 
 resource "azurerm_key_vault" "kvaultmv1" {
@@ -73,18 +73,17 @@ resource "azurerm_key_vault" "kvaultmv1" {
   }
 
   access_policy {
-    tenant_id = data.azurerm_client_config.current.tenant_id
-    object_id = data.azurerm_client_config.current.object_id
-
+    tenant_id          = data.azurerm_client_config.current.tenant_id
+    object_id          = data.azurerm_client_config.current.object_id
     secret_permissions = [
-      "get",
-      "list",
-      "set",
-      "delete",
-      "recover",
-      "backup",
-      "restore",
-      "purge"
+      "Backup",
+      "Delete",
+      "Get",
+      "List",
+      "Purge",
+      "Recover",
+      "Restore",
+      "Set"
     ]
   }
 }
@@ -106,9 +105,9 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   }
 
   os_disk {
-    name              = "vm1OSDisk"
-    caching           = "ReadWrite"
-    storage_account_type = "Standard_LRS"
+    name                  = "vm1OSDisk"
+    caching               = "ReadWrite"
+    storage_account_type  = "Standard_LRS"
   }
 
   admin_ssh_key {
