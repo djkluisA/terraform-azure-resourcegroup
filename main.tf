@@ -40,8 +40,6 @@ resource "azurerm_network_interface" "nic1" {
 resource "tls_private_key" "key1" {
   algorithm   = "RSA"
   rsa_bits    = 4096
-
-  depends_on = [azurerm_key_vault_secret.public-clave, azurerm_key_vault_secret.secret-clave]
 }
 
 resource "azurerm_key_vault" "kvaultmv1" {
@@ -120,8 +118,8 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   }
 }
 
-variable "address_space" { }
+variable "address_space" {}
 
-variable "address_prefixes" { }
+variable "address_prefixes" {}
 
-variable "private_ip_address" { }
+variable "private_ip_address" {}
