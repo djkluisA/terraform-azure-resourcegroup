@@ -29,6 +29,7 @@ resource "azurerm_subnet" "example" {
 resource "azurerm_network_interface" "example" {
   name                = "nic1"
   resource_group_name = data.azurerm_resource_group.example.name
+  location            = data.azurerm_resource_group.example.location
 
   ip_configuration {
     name                          = "testconfiguration1"
