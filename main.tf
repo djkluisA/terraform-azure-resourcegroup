@@ -8,9 +8,17 @@ data "azurerm_resource_group" "sandbox" {
   name = "1-3baf3667-playground-sandbox"
 }
 
-variable "address_space" {}
+variable "address_space" {
+  default = []
+}
 
-variable "address_prefixes" {}
+variable "address_prefixes" {
+  default = []
+}
+
+variable "private_ip_address" {
+  default = ""
+}
 
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
@@ -23,7 +31,7 @@ resource "azurerm_subnet" "sbnet1" {
   name                 = "sbnet1"
   resource_group_name  = data.azurerm_resource_group.sandbox.name
   virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = [var.address_prefixes]
+  address_prefixes     = var.address_prefixes
 }
 
 resource "azurerm_network_interface" "nic1" {
