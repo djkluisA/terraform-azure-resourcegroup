@@ -85,10 +85,9 @@ resource "azurerm_key_vault_secret" "secret-clave" {
   key_vault_id = azurerm_key_vault.kvaultmv1.id
 }
 
-data "azurerm_compute_image" "ubuntuserver" {
-  offer     = "UbuntuServer"
-  publisher = "Canonical"
-  sku       = "18.04-LTS"
+data "azurerm_image" "ubuntu" {
+  name                = "UbuntuServer"
+  resource_group_name = data.azurerm_resource_group.test.name
 }
 
 resource "azurerm_linux_virtual_machine" "vm1" {
@@ -97,11 +96,8 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   resource_group_name = data.azurerm_resource_group.test.name
   size                = "Standard_B2s"
 
-  source_image_reference {
-    publisher = data.azurerm_compute_image.ubuntuserver.publisher
-    offer     = data.azurerm_compute_image.ubuntuserver.offer
-    sku       = data.azurerm_compute_image.ubuntuserver.sku
-    version   = "latest"
+  storage_image_reference {
+    id = data.azurerm_image.ubuntu.id
   }
 
   admin_username = "azureuser"
