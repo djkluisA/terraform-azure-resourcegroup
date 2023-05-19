@@ -1,4 +1,13 @@
 
+provider "azurerm" {
+  features {}
+  skip_provider_registration = true
+}
+
+data "azurerm_resource_group" "rg" {
+  name = "1-3baf3667-playground-sandbox"
+}
+
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   address_space       = var.address_space
@@ -18,14 +27,12 @@ resource "azurerm_network_interface" "nic1" {
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
 
-  ip_configurations = [
-    {
-      name                          = "ipconfig1"
-      subnet_id                     = azurerm_subnet.sbnet1.id
-      private_ip_address            = var.private_ip_address
-      private_ip_address_allocation = "Static"
-    }
-  ]
+  ip_configuration {
+    name                          = "ipconfig1"
+    subnet_id                     = azurerm_subnet.sbnet1.id
+    private_ip_address            = var.private_ip_address
+    private_ip_address_allocation = "Static"
+  }
 }
 
 resource "azurerm_linux_virtual_machine" "vm1" {
@@ -52,15 +59,6 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   disable_password_authentication = false
 
   network_interface_ids = [azurerm_network_interface.nic1.id]
-}
-
-data "azurerm_resource_group" "rg" {
-  name = "1-3baf3667-playground-sandbox"
-}
-
-provider "azurerm" {
-  features {}
-  skip_provider_registration = true
 }
 
 variable "address_space" {}
