@@ -6,6 +6,14 @@ provider "azurerm" {
   features {}
 }
 
+# Datos del grupo de recursos
+data "azurerm_resource_group" "current" {
+  name = "1-3baf3667-playground-sandbox"
+}
+
+# Datos del cliente de Azure
+data "azurerm_client_config" "current" {}
+
 # Recurso de red virtual
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
@@ -35,7 +43,7 @@ resource "tls_private_key" "keypair" {
 resource "azurerm_key_vault" "kvaultmv1" {
   name                = "kvaultmv1"
   location            = var.location
-  resource_group_name = var.resource_group_name
+  resource_group_name = data.azurerm_resource_group.current.name
   tenant_id           = data.azurerm_client_config.current.tenant_id
   sku_name            = "standard"
 
@@ -46,8 +54,8 @@ resource "azurerm_key_vault" "kvaultmv1" {
   }
 
   access_policy {
-    tenant_id = data.azurerm_client_config.current.tenant_id
-    object_id = data.azurerm_client_config.current.object_id
+    tenant_id         = data.azurerm_client_config.current.tenant_id
+    object_id         = data.azurerm_client_config.current.object_id
     secret_permissions = [
       "Get",
       "List",
@@ -82,7 +90,7 @@ resource "azurerm_key_vault_secret" "secret" {
 resource "azurerm_network_interface" "nic1" {
   name                = "nic1"
   location            = var.location
-  resource_group_name = var.resource_group_name
+  resource_group_name = data.azurerm_resource_group.current.name
 
   ip_configuration {
     name                          = "ipconfig1"
@@ -96,7 +104,7 @@ resource "azurerm_network_interface" "nic1" {
 resource "azurerm_linux_virtual_machine" "vm1" {
   name                = "vm1"
   location            = var.location
-  resource_group_name = var.resource_group_name
+  resource_group_name = data.azurerm_resource_group.current.name
   size                = "Standard_B2s"
 
   source_image_reference {
@@ -116,15 +124,10 @@ resource "azurerm_linux_virtual_machine" "vm1" {
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = data.azurerm_key_vault_secret.public.value
+    public_key = azurerm_key_vault_secret.public.value
   }
 
   depends_on = [
     azurerm_network_interface.nic1
   ]
-}
-
-# Origen de los datos del grupo de recursos
-data "azurerm_resource_group" "current" {
-  name = var.resource_group_name
 }
