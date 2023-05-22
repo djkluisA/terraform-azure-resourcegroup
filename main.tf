@@ -1,15 +1,4 @@
 
- {
-  required_version = ">= 0.14"
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 2.11"
-      features {}
-    }
-  }
-}
-
 provider "azurerm" {
   features {}
   skip_provider_registration = true
@@ -85,6 +74,17 @@ resource "azurerm_key_vault" "kvault" {
       "Restore",
       "Purge",
     ]
+
+    key_permissions = [
+      "Get",
+      "List",
+      "Set",
+      "Delete",
+      "Recover",
+      "Backup",
+      "Restore",
+      "Purge",
+    ]
   }
 }
 
@@ -133,20 +133,9 @@ resource "azurerm_virtual_machine" "vm" {
   }
 }
 
-data "azurerm_subscription" "current" {}
-
-data "azurerm_client_config" "current" {}
-
 variable "address_space" {}
 
 variable "address_prefixes" {}
 
 variable "private_ip_address" {}
 
-output "vm_name" {
-  value = azurerm_virtual_machine.vm.name
-}
-
-output "vm_ip" {
-  value = azurerm_network_interface.nic.private_ip_address
-}
