@@ -14,7 +14,7 @@ data "azurerm_resource_group" "current" {
 # Datos del cliente de Azure
 data "azurerm_client_config" "current" {}
 
-# Recurso de red virtual
+# Red virtual y subred
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   address_space       = var.address_space
@@ -22,14 +22,13 @@ resource "azurerm_virtual_network" "vnet1" {
   resource_group_name = data.azurerm_resource_group.current.name
 }
 
-# Subred virtual
 resource "azurerm_subnet" "sbnet1" {
   name                 = "sbnet1"
   virtual_network_name = azurerm_virtual_network.vnet1.name
   address_prefixes     = var.address_prefixes
 }
 
-# Recurso de clave privada TLS
+# Clave privada TLS
 resource "tls_private_key" "keypair" {
   algorithm = "RSA"
   size      = 4096
@@ -129,3 +128,13 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     tls_private_key.keypair
   ]
 }
+
+# Variables
+variable "address_space" {}
+variable "address_prefixes" {}
+variable "private_ip_address" {}
+
+# Declaración de valores para variables
+# Estos valores se pueden configurar en un archivo .tfvars
+# o pasarse en la línea de comandos con -var "nombre_variable=valor"
+# Ejemplo:  apply -var "address_space=10.0.0.0/16"
