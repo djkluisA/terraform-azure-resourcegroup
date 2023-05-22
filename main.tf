@@ -48,7 +48,7 @@ resource "tls_private_key" "key-pair" {
   algorithm   = "RSA"
   rsa_bits    = 4096
 
-  depends_on = []
+  depends_on = [azurerm_key_vault.kvaultmv1]
 
   lifecycle {
     create_before_destroy = false
