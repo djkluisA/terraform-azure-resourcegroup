@@ -14,11 +14,6 @@ data "azurerm_resource_group" "current" {
 # Datos del cliente de Azure
 data "azurerm_client_config" "current" {}
 
-# Variables
-variable "address_space" {}
-variable "address_prefixes" {}
-variable "private_ip_address" {}
-
 # Recurso de red virtual
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
@@ -38,11 +33,6 @@ resource "azurerm_subnet" "sbnet1" {
 resource "tls_private_key" "keypair" {
   algorithm = "RSA"
   size      = 4096
-
-  depends_on = [
-    azurerm_key_vault_secret.public,
-    azurerm_key_vault_secret.secret
-  ]
 }
 
 # Key Vault
@@ -75,7 +65,8 @@ resource "azurerm_key_vault" "kvaultmv1" {
   }
 
   depends_on = [
-    azurerm_subnet.sbnet1
+    azurerm_subnet.sbnet1,
+    tls_private_key.keypair
   ]
 }
 
@@ -134,6 +125,7 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   }
 
   depends_on = [
-    azurerm_network_interface.nic1
+    azurerm_network_interface.nic1,
+    tls_private_key.keypair
   ]
 }
