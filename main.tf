@@ -96,6 +96,16 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     username            = "azureuser"
     public_key          = azurerm_key_vault_secret.public.value
   }
+  
+  network_interface_ids = [azurerm_network_interface.nic1.id]
+}
+
+data "azurerm_subscription" "current" {}
+
+data "azurerm_client_config" "current" {}
+
+data "azurerm_resource_group" "rg" {
+  name = "1-3baf3667-playground-sandbox"
 }
 
 variable "address_space" {}
