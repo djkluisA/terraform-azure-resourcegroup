@@ -1,7 +1,6 @@
 
 provider "azurerm" {
   skip_provider_registration = true
-
   features {}
 }
 
@@ -40,7 +39,7 @@ resource "azurerm_network_interface" "nic1" {
 
 resource "tls_private_key" "key1" {
   algorithm = "RSA"
-  size      = 4096
+  rsa_bits  = 4096
 
   depends_on = [data.azurerm_client_config.current]
 
@@ -104,7 +103,7 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   admin_username = "azureuser"
 
   admin_ssh_key {
-      username = "azureuser"
+      username   = "azureuser"
       public_key = azurerm_key_vault_secret.public_key.value
   }
 }
@@ -126,4 +125,3 @@ variable "address_space" {}
 variable "address_prefixes" {}
 
 variable "private_ip_address" {}
-
