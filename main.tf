@@ -79,6 +79,19 @@ data "azurerm_storage_account" "image" {
   resource_group_name = "shared-images"
 }
 
+resource "azurerm_network_interface" "nic" {
+  name                = "nic1"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+
+  ip_configuration {
+    name                          = "ipconfig1"
+    subnet_id                     = azurerm_subnet.sbnet.id
+    private_ip_address            = var.private_ip_address
+    private_ip_address_allocation = "Static"
+  }
+}
+
 resource "azurerm_linux_virtual_machine" "vm" {
   name                = "vm1"
   location            = data.azurerm_resource_group.rg.location
@@ -106,19 +119,6 @@ resource "azurerm_linux_virtual_machine" "vm" {
   }
 
   network_interface_ids = [azurerm_network_interface.nic.id]
-}
-
-resource "azurerm_network_interface" "nic" {
-  name                = "nic1"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
-
-  ip_configurations {
-    name                          = "ipconfig1"
-    subnet_id                     = azurerm_subnet.sbnet.id
-    private_ip_address            = var.private_ip_address
-    private_ip_address_allocation = "Static"
-  }
 }
 
 variable "address_space" {}
