@@ -24,31 +24,9 @@ resource "azurerm_subnet" "sbnet" {
   address_prefixes     = var.address_prefixes
 }
 
-resource "azurerm_network_interface" "nic" {
-  name                = "nic1"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
-
-  ip_configurations {
-    name                          = "ipconfig1"
-    subnet_id                     = azurerm_subnet.sbnet.id
-    private_ip_address            = var.private_ip_address
-    private_ip_address_allocation = "Static"
-  }
-}
-
 resource "tls_private_key" "key" {
   algorithm = "RSA"
   rsa_bits  = 4096
-
-  depends_on = [
-    azurerm_key_vault_secret.public,
-    azurerm_key_vault_secret.secret
-  ]
-
-  lifecycle {
-    ignore_changes = [public_key_pem, private_key_pem]
-  }
 }
 
 resource "azurerm_key_vault" "kv" {
@@ -126,8 +104,25 @@ resource "azurerm_linux_virtual_machine" "vm" {
     username = "azureuser"
     public_key = azurerm_key_vault_secret.public.value
   }
+
+  network_interface_ids = [azurerm_network_interface.nic.id]
+}
+
+resource "azurerm_network_interface" "nic" {
+  name                = "nic1"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+
+  ip_configurations {
+    name                          = "ipconfig1"
+    subnet_id                     = azurerm_subnet.sbnet.id
+    private_ip_address            = var.private_ip_address
+    private_ip_address_allocation = "Static"
+  }
 }
 
 variable "address_space" {}
+
 variable "address_prefixes" {}
+
 variable "private_ip_address" {}
