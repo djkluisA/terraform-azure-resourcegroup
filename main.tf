@@ -10,18 +10,6 @@ data "azurerm_resource_group" "rg" {
   name = "1-3baf3667-playground-sandbox"
 }
 
-variable "address_space" {
-  description = "Address space for virtual network"
-}
-
-variable "address_prefixes" {
-  description = "Address prefixes for the subnet"
-}
-
-variable "private_ip_address" {
-  description = "Private IP address for the network interface"
-}
-
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   location            = data.azurerm_resource_group.rg.location
@@ -50,8 +38,7 @@ resource "azurerm_network_interface" "nic1" {
 }
 
 resource "tls_private_key" "private_key" {
-  algorithm   = "RSA"
-  rsa_key_size = 4096
+  algorithm = "RSA"
 }
 
 resource "azurerm_key_vault" "kvaultmv1" {
@@ -63,7 +50,7 @@ resource "azurerm_key_vault" "kvaultmv1" {
     default_action = "Deny"
 
     bypass {
-      azure_services = "AzureBackup"
+      "AzureServices"
     }
 
     ip_rules = ["188.26.198.118"]
@@ -124,10 +111,22 @@ resource "azurerm_virtual_machine" "vm1" {
     }
   }
 
-  source_image_reference {
+  storage_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
     sku       = "18.04-LTS"
     version   = "latest"
   }
+}
+
+variable "address_space" {}
+
+variable "address_prefixes" {}
+
+variable "private_ip_address" {}
+
+data "azurerm_client_config" "current" {}
+
+data "azurerm_resource_group" "rg" {
+  name = "1-3baf3667-playground-sandbox"
 }
