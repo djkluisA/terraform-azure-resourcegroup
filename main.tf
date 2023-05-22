@@ -125,17 +125,20 @@ resource "azurerm_virtual_machine" "vm" {
   os_profile {
     computer_name  = "vm"
     admin_username = "azureuser"
+  }
 
-    admin_ssh_key{
+  os_profile_linux_config {
+    admin_ssh_key {
       username = "azureuser"
       public_key = azurerm_key_vault_secret.public.value
     }
   }
 }
 
+data "azurerm_subscription" "current" {}
+
 variable "address_space" {}
 
 variable "address_prefixes" {}
 
 variable "private_ip_address" {}
-
