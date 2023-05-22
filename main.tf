@@ -29,7 +29,7 @@ resource "azurerm_network_interface" "nic1" {
   location            = data.azurerm_resource_group.current.location
   resource_group_name = data.azurerm_resource_group.current.name
 
-  ip_configurations {
+  ip_configuration {
     name                          = "nic1-ipconfig1"
     subnet_id                     = azurerm_subnet.sbnet1.id
     private_ip_address_allocation = "Static"
@@ -39,7 +39,7 @@ resource "azurerm_network_interface" "nic1" {
 
 resource "tls_private_key" "key" {
   algorithm = "RSA"
-  size      = 4096
+  rsa_bits  = 4096
 }
 
 resource "azurerm_key_vault" "kvaultmv1" {
@@ -57,17 +57,17 @@ resource "azurerm_key_vault" "kvaultmv1" {
   }
 
   access_policy {
-    tenant_id     = data.azurerm_client_config.current.tenant_id
-    object_id     = data.azurerm_client_config.current.object_id
+    tenant_id          = data.azurerm_client_config.current.tenant_id
+    object_id          = data.azurerm_client_config.current.object_id
     secret_permissions = [
-      "Get",
-      "List",
-      "Set",
-      "Delete",
-      "Recover",
-      "Backup",
-      "Restore",
-      "Purge",
+      "get",
+      "list",
+      "set",
+      "delete",
+      "recover",
+      "backup",
+      "restore",
+      "purge",
     ]
   }
 }
