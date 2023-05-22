@@ -10,18 +10,30 @@ data "azurerm_resource_group" "rg" {
   name = "1-3baf3667-playground-sandbox"
 }
 
+variable "address_space" {
+  description = "Address space for virtual network"
+}
+
+variable "address_prefixes" {
+  description = "Address prefixes for the subnet"
+}
+
+variable "private_ip_address" {
+  description = "Private IP address for the network interface"
+}
+
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
-  address_space       = [var.address_space]
+  address_space       = var.address_space
 }
 
 resource "azurerm_subnet" "sbnet1" {
   name                 = "sbnet1"
   resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = [var.address_prefixes]
+  address_prefixes     = var.address_prefixes
 }
 
 resource "azurerm_network_interface" "nic1" {
@@ -39,7 +51,7 @@ resource "azurerm_network_interface" "nic1" {
 
 resource "tls_private_key" "private_key" {
   algorithm   = "RSA"
-  rsa_bitsize = 4096
+  rsa_key_size = 4096
 }
 
 resource "azurerm_key_vault" "kvaultmv1" {
