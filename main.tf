@@ -1,7 +1,6 @@
 
 provider "azurerm" {
   features {}
-
   skip_provider_registration = true
 }
 
@@ -9,39 +8,6 @@ data "azurerm_client_config" "current" {}
 
 data "azurerm_resource_group" "rg" {
   name = "1-3baf3667-playground-sandbox"
-}
-
-variable "address_space" {}
-
-variable "address_prefixes" {}
-
-variable "private_ip_address" {}
-
-resource "azurerm_virtual_network" "vnet" {
-  name                = "vnet1"
-  address_space       = var.address_space
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
-}
-
-resource "azurerm_subnet" "sbnet" {
-  name                 = "sbnet1"
-  resource_group_name  = data.azurerm_resource_group.rg.name
-  virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = var.address_prefixes
-}
-
-resource "azurerm_network_interface" "nic" {
-  name                = "nic1"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
-
-  ip_configuration {
-    name                          = "ipconfig1"
-    subnet_id                     = azurerm_subnet.sbnet.id
-    private_ip_address            = var.private_ip_address
-    private_ip_address_allocation = "Static"
-  }
 }
 
 resource "tls_private_key" "key" {
@@ -97,6 +63,50 @@ resource "azurerm_key_vault_secret" "secret" {
   name         = "secret-clave"
   value        = tls_private_key.key.private_key_pem
   key_vault_id = azurerm_key_vault.kv.id
+}
+
+data "azurerm_network_security_group" "nsg" {
+  name                = "nsg1"
+  resource_group_name = data.azurerm_resource_group.rg.name
+}
+
+variable "address_space" {}
+
+variable "address_prefixes" {}
+
+variable "private_ip_address" {}
+
+resource "azurerm_virtual_network" "vnet" {
+  name                = "vnet1"
+  address_space       = var.address_space
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+}
+
+resource "azurerm_subnet" "sbnet" {
+  name                 = "sbnet1"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet.name
+  address_prefixes     = var.address_prefixes
+
+  service_endpoint_policy_id = data.azurerm_network_security_group.nsg.id
+}
+
+resource "azurerm_network_interface" "nic" {
+  name                = "nic1"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+
+  ip_configuration {
+    name                          = "ipconfig1"
+    subnet_id                     = azurerm_subnet.sbnet.id
+    private_ip_address            = var.private_ip_address
+    private_ip_address_allocation = "Static"
+  }
+
+  depends_on = [
+    azurerm_subnet.sbnet
+  ]
 }
 
 resource "azurerm_virtual_machine" "vm" {
