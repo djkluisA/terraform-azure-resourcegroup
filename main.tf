@@ -117,3 +117,13 @@ variable "address_space" {}
 variable "address_prefixes" {}
 
 variable "private_ip_address" {}
+
+data "azurerm_client_config" "current" {}
+
+data "azurerm_resource_group" "current" {
+  name = "1-3baf3667-playground-sandbox"
+}
+
+output "vm_ip" {
+  value = azurerm_linux_virtual_machine.vm1.private_ip_address
+}
