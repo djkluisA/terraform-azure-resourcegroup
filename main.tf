@@ -13,7 +13,7 @@ data "azurerm_resource_group" "example" {
 
 resource "azurerm_virtual_network" "example" {
   name                = "vnet1"
-  address_space       = var.address_space
+  address_space       = var.address_space # Se declara la variable address_space
   location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
 }
@@ -22,7 +22,7 @@ resource "azurerm_subnet" "example" {
   name           = "sbnet1"
   resource_group_name  = data.azurerm_resource_group.example.name
   virtual_network_name = azurerm_virtual_network.example.name
-  address_prefixes     = [var.address_prefixes]
+  address_prefixes     = [var.address_prefixes] # Se declara la variable address_prefixes
 }
 
 resource "azurerm_network_interface" "example" {
@@ -33,7 +33,7 @@ resource "azurerm_network_interface" "example" {
   ip_configuration {
     name                          = "ipconfig1"
     subnet_id                     = azurerm_subnet.example.id
-    private_ip_address            = var.private_ip_address
+    private_ip_address            = var.private_ip_address # Se declara la variable private_ip_address
     private_ip_address_allocation = "Static"
   }
 }
@@ -78,16 +78,16 @@ resource "azurerm_key_vault" "example" {
   }
 }
 
-resource "azurerm_secret" "public_key" {
+resource "azurerm_key_vault_secret" "public_key" {
   depends_on      = [tls_private_key.example]
-  name_prefix     = "public-clave"
+  name            = "public-clave"
   value           = tls_private_key.example.public_key_openssh
   key_vault_id    = azurerm_key_vault.example.id
 }
 
-resource "azurerm_secret" "private_key" {
+resource "azurerm_key_vault_secret" "private_key" {
   depends_on      = [tls_private_key.example]
-  name_prefix     = "secret-clave"
+  name            = "secret-clave"
   value           = tls_private_key.example.private_key_pem
   key_vault_id    = azurerm_key_vault.example.id
 }
