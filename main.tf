@@ -84,6 +84,7 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   name                = "vm1"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
+  network_interface_ids = [azurerm_network_interface.nic1.id]
 
   size = "Standard_B2s"
 
