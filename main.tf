@@ -13,16 +13,16 @@ data "azurerm_resource_group" "example" {
 
 resource "azurerm_virtual_network" "example" {
   name                = "vnet1"
-  address_space       = var.address_space # Se declara la variable address_space
+  address_space       = var.address_space
   location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
 }
 
 resource "azurerm_subnet" "example" {
-  name           = "sbnet1"
+  name                 = "sbnet1"
   resource_group_name  = data.azurerm_resource_group.example.name
   virtual_network_name = azurerm_virtual_network.example.name
-  address_prefixes     = [var.address_prefixes] # Se declara la variable address_prefixes
+  address_prefixes     = [var.address_prefixes]
 }
 
 resource "azurerm_network_interface" "example" {
@@ -33,7 +33,7 @@ resource "azurerm_network_interface" "example" {
   ip_configuration {
     name                          = "ipconfig1"
     subnet_id                     = azurerm_subnet.example.id
-    private_ip_address            = var.private_ip_address # Se declara la variable private_ip_address
+    private_ip_address            = var.private_ip_address
     private_ip_address_allocation = "Static"
   }
 }
