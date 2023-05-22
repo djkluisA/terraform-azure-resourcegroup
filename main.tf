@@ -1,56 +1,68 @@
 
-# Configuración del proveedor de Azure
 provider "azurerm" {
-  skip_provider_registration = true
-
   features {}
+  skip_provider_registration = true
 }
 
-# Datos del grupo de recursos
-data "azurerm_resource_group" "current" {
+data "azurerm_client_config" "current" {}
+
+data "azurerm_resource_group" "rg" {
   name = "1-3baf3667-playground-sandbox"
 }
 
-# Datos del cliente de Azure
-data "azurerm_client_config" "current" {}
-
-# Red virtual y subred
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
-  address_space       = var.address_space
-  location            = data.azurerm_resource_group.current.location
-  resource_group_name = data.azurerm_resource_group.current.name
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  address_space       = [var.address_space]
 }
 
 resource "azurerm_subnet" "sbnet1" {
   name                 = "sbnet1"
+  resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = var.address_prefixes
+  address_prefixes     = [var.address_prefixes]
 }
 
-# Clave privada TLS
-resource "tls_private_key" "keypair" {
-  algorithm = "RSA"
-  size      = 4096
+resource "azurerm_network_interface" "nic1" {
+  name                = "nic1"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+
+  ip_configuration {
+    name                          = "ipconfig1"
+    subnet_id                     = azurerm_subnet.sbnet1.id
+    private_ip_address            = var.private_ip_address
+    private_ip_address_allocation = "Static"
+  }
 }
 
-# Key Vault
+resource "tls_private_key" "private_key" {
+  algorithm   = "RSA"
+  rsa_bitsize = 4096
+}
+
 resource "azurerm_key_vault" "kvaultmv1" {
   name                = "kvaultmv1"
-  location            = data.azurerm_resource_group.current.location
-  resource_group_name = data.azurerm_resource_group.current.name
-  tenant_id           = data.azurerm_client_config.current.tenant_id
-  sku_name            = "standard"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
 
   network_acls {
     default_action = "Deny"
-    bypass         = "AzureServices"
-    ip_rules       = ["188.26.198.118"]
+
+    bypass {
+      azure_services = "AzureBackup"
+    }
+
+    ip_rules = ["188.26.198.118"]
   }
 
+  sku_name = "standard"
+
   access_policy {
-    tenant_id         = data.azurerm_client_config.current.tenant_id
-    object_id         = data.azurerm_client_config.current.object_id
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = data.azurerm_client_config.current.object_id
+
     secret_permissions = [
       "Get",
       "List",
@@ -59,49 +71,46 @@ resource "azurerm_key_vault" "kvaultmv1" {
       "Recover",
       "Backup",
       "Restore",
-      "Purge"
+      "Purge",
     ]
   }
 
-  depends_on = [
-    azurerm_subnet.sbnet1,
-    tls_private_key.keypair
-  ]
-}
+  secret {
+    name         = "public-clave"
+    value        = tls_private_key.private_key.public_key_openssh
+    content_type = "text/plain"
+  }
 
-# Secretos del Key Vault
-resource "azurerm_key_vault_secret" "public" {
-  name         = "public-clave"
-  value        = tls_private_key.keypair.public_key_pem
-  key_vault_id = azurerm_key_vault.kvaultmv1.id
-}
-
-resource "azurerm_key_vault_secret" "secret" {
-  name         = "secret-clave"
-  value        = tls_private_key.keypair.private_key_pem
-  key_vault_id = azurerm_key_vault.kvaultmv1.id
-}
-
-# Interfaz de red
-resource "azurerm_network_interface" "nic1" {
-  name                = "nic1"
-  location            = data.azurerm_resource_group.current.location
-  resource_group_name = data.azurerm_resource_group.current.name
-
-  ip_configuration {
-    name                          = "ipconfig1"
-    subnet_id                     = azurerm_subnet.sbnet1.id
-    private_ip_address_allocation = "Static"
-    private_ip_address            = var.private_ip_address
+  secret {
+    name         = "secret-clave"
+    value        = tls_private_key.private_key.private_key_pem
+    content_type = "text/plain"
   }
 }
 
-# Máquina virtual
-resource "azurerm_linux_virtual_machine" "vm1" {
-  name                = "vm1"
-  location            = data.azurerm_resource_group.current.location
-  resource_group_name = data.azurerm_resource_group.current.name
-  size                = "Standard_B2s"
+resource "azurerm_virtual_machine" "vm1" {
+  name                  = "vm1"
+  location              = data.azurerm_resource_group.rg.location
+  resource_group_name   = data.azurerm_resource_group.rg.name
+  vm_size               = "Standard_B2s"
+  network_interface_ids = [azurerm_network_interface.nic1.id]
+
+  storage_os_disk {
+    name              = "os_disk"
+    create_option     = "FromImage"
+    caching           = "ReadWrite"
+    managed_disk_type = "Standard_LRS"
+  }
+
+  os_profile {
+    computer_name  = "vm1"
+    admin_username = "azureuser"
+
+    admin_ssh_key {
+      username   = "azureuser"
+      public_key = azurerm_key_vault_secret.public-clave.value
+    }
+  }
 
   source_image_reference {
     publisher = "Canonical"
@@ -109,32 +118,4 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     sku       = "18.04-LTS"
     version   = "latest"
   }
-
-  os_disk {
-    name              = "osdisk"
-    caching           = "ReadWrite"
-    storage_account_type = "Standard_LRS"
-  }
-
-  admin_username = "azureuser"
-
-  admin_ssh_key {
-    username   = "azureuser"
-    public_key = azurerm_key_vault_secret.public.value
-  }
-
-  depends_on = [
-    azurerm_network_interface.nic1,
-    tls_private_key.keypair
-  ]
 }
-
-# Variables
-variable "address_space" {}
-variable "address_prefixes" {}
-variable "private_ip_address" {}
-
-# Declaración de valores para variables
-# Estos valores se pueden configurar en un archivo .tfvars
-# o pasarse en la línea de comandos con -var "nombre_variable=valor"
-# Ejemplo:  apply -var "address_space=10.0.0.0/16"
