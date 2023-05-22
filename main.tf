@@ -104,12 +104,23 @@ data "azurerm_subscription" "current" {}
 
 data "azurerm_client_config" "current" {}
 
+variable "address_space" {}
+variable "address_prefixes" {}
+variable "private_ip_address" {}
+
 data "azurerm_resource_group" "rg" {
   name = "1-3baf3667-playground-sandbox"
 }
 
-variable "address_space" {}
+data "azurerm_client_config" "current" {}
 
-variable "address_prefixes" {}
+ {
+  required_version = ">= 1.0.0"
+  backend "remote" {
+    organization = "ORGANIZATION_NAME"
 
-variable "private_ip_address" {}
+    workspaces {
+      name = "WORKSPACE_NAME"
+    }
+  }
+}
