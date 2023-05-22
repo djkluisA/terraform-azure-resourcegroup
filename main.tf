@@ -124,6 +124,15 @@ data "azurerm_resource_group" "current" {
   name = "1-3baf3667-playground-sandbox"
 }
 
+ {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "=2.0.0"
+    }
+  }
+}
+
 output "vm_ip" {
   value = azurerm_linux_virtual_machine.vm1.private_ip_address
 }
