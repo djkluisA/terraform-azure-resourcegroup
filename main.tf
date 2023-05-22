@@ -128,9 +128,9 @@ resource "azurerm_virtual_machine" "vm" {
   }
 
   os_profile_linux_config {
-    admin_ssh_key {
-      username = "azureuser"
-      public_key = azurerm_key_vault_secret.public.value
+    ssh_keys {
+      key_data = azurerm_key_vault_secret.public.value
+      path     = "/home/azureuser/.ssh/authorized_keys"
     }
   }
 }
