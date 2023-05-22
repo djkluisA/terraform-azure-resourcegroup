@@ -6,79 +6,88 @@ provider "azurerm" {
 
 data "azurerm_client_config" "current" {}
 
-data "azurerm_resource_group" "rg" {
+data "azurerm_resource_group" "current" {
   name = "1-3baf3667-playground-sandbox"
 }
 
-variable "address_space" {}
-
-variable "address_prefixes" {}
-
-variable "private_ip_address" {}
-
-resource "azurerm_virtual_network" "vnet" {
+resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   address_space       = var.address_space
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.current.location
+  resource_group_name = data.azurerm_resource_group.current.name
 }
 
-resource "azurerm_subnet" "sbnet" {
+resource "azurerm_subnet" "sbnet1" {
   name                 = "sbnet1"
-  resource_group_name  = data.azurerm_resource_group.rg.name
-  virtual_network_name = azurerm_virtual_network.vnet.name
+  resource_group_name  = data.azurerm_resource_group.current.name
+  virtual_network_name = azurerm_virtual_network.vnet1.name
   address_prefixes     = var.address_prefixes
 }
 
-resource "azurerm_network_interface" "nic" {
+resource "azurerm_network_interface" "nic1" {
   name                = "nic1"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.current.location
+  resource_group_name = data.azurerm_resource_group.current.name
 
-  ip_configuration {
-    name                          = "ipconfig"
-    subnet_id                     = azurerm_subnet.sbnet.id
-    private_ip_address            = var.private_ip_address
+  ip_configurations {
+    name                          = "nic1-ipconfig1"
+    subnet_id                     = azurerm_subnet.sbnet1.id
     private_ip_address_allocation = "Static"
+    private_ip_address            = var.private_ip_address
   }
 }
 
-resource "tls_private_key" "private_key" {
+resource "tls_private_key" "key" {
   algorithm = "RSA"
-  rsa_bits  = 4096
+  size      = 4096
 }
 
-resource "azurerm_key_vault" "key_vault" {
-  name                        = "kvaultmv1"
-  location                    = data.azurerm_resource_group.rg.location
-  resource_group_name         = data.azurerm_resource_group.rg.name
-  tenant_id                   = data.azurerm_client_config.current.tenant_id
-  sku_name                    = "standard"
-
-  access_policy {
-    tenant_id = data.azurerm_client_config.current.tenant_id
-    object_id = data.azurerm_client_config.current.object_id
-    secret_permissions = [
-      "Get", "List", "Set", 
-      "Delete", "Recover", "Backup", 
-      "Restore", "Purge"
-    ]
-  }
+resource "azurerm_key_vault" "kvaultmv1" {
+  name                = "kvaultmv1"
+  location            = data.azurerm_resource_group.current.location
+  resource_group_name = data.azurerm_resource_group.current.name
+  tenant_id           = data.azurerm_client_config.current.tenant_id
+  sku_name            = "standard"
 
   network_acls {
-    default_action = "Deny"
-    bypass         = "AzureServices"
-  
-    ip_rules = [
-      "188.26.198.118"
+    bypass               = "AzureServices"
+    default_action       = "Deny"
+    ip_rules             = ["188.26.198.118"]
+    virtual_network_subnet_ids = [azurerm_subnet.sbnet1.id]
+  }
+
+  access_policy {
+    tenant_id     = data.azurerm_client_config.current.tenant_id
+    object_id     = data.azurerm_client_config.current.object_id
+    secret_permissions = [
+      "Get",
+      "List",
+      "Set",
+      "Delete",
+      "Recover",
+      "Backup",
+      "Restore",
+      "Purge",
     ]
   }
 }
 
-resource "azurerm_linux_virtual_machine" "vm" {
+resource "azurerm_key_vault_secret" "kv_secret1" {
+  name         = "public-clave"
+  value        = tls_private_key.key.public_key_openssh
+  key_vault_id = azurerm_key_vault.kvaultmv1.id
+}
+
+resource "azurerm_key_vault_secret" "kv_secret2" {
+  name         = "secret-clave"
+  value        = tls_private_key.key.private_key_pem
+  key_vault_id = azurerm_key_vault.kvaultmv1.id
+}
+
+resource "azurerm_linux_virtual_machine" "vm1" {
   name                = "vm1"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.current.location
+  resource_group_name = data.azurerm_resource_group.current.name
   size                = "Standard_B2s"
 
   source_image_reference {
@@ -88,55 +97,22 @@ resource "azurerm_linux_virtual_machine" "vm" {
     version   = "latest"
   }
 
-  admin_username = "azureuser"
-
   os_disk {
-    name              = "osdisk"
-    caching           = "ReadWrite"
+    name          = "osdisk1"
+    caching       = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
 
+  admin_username = "azureuser"
+
   admin_ssh_key {
     username   = "azureuser"
-    public_key = azurerm_key_vault_secret.public_key.value
+    public_key = azurerm_key_vault_secret.kv_secret1.value
   }
-
-  network_interface_ids = [
-    azurerm_network_interface.nic.id
-  ]
-
-  depends_on = [
-    azurerm_key_vault_secret.public_key,
-    azurerm_key_vault_secret.secret_key
-  ]
 }
 
-resource "azurerm_key_vault_secret" "public_key" {
-  name         = "public-clave"
-  value        = tls_private_key.private_key.public_key_openssh
-  key_vault_id = azurerm_key_vault.key_vault.id
-}
+variable "address_space" {}
 
-resource "azurerm_key_vault_secret" "secret_key" {
-  name         = "secret-clave"
-  value        = tls_private_key.private_key.private_key_pem
-  key_vault_id = azurerm_key_vault.key_vault.id
-} 
+variable "address_prefixes" {}
 
-# Data resources
-data "azurerm_subscription" "current" {}
-
-data "azurerm_client_config" "current" {}
-
-data "azurerm_resource_group" "rg" {
-  name = "1-3baf3667-playground-sandbox"
-}
-
-# Outputs
-output "vm_private_ip_address" {
-  value = azurerm_network_interface.nic.private_ip_address
-}
-
-output "vm_ssh_command" {
-  value = "ssh azureuser@${azurerm_network_interface.nic.private_ip_address}"
-}
+variable "private_ip_address" {}
