@@ -14,11 +14,17 @@ data "azurerm_resource_group" "current" {
 # Datos del cliente de Azure
 data "azurerm_client_config" "current" {}
 
+# Variables
+variable "address_space" {}
+variable "address_prefixes" {}
+variable "private_ip_address" {}
+
 # Recurso de red virtual
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   address_space       = var.address_space
-  location            = var.location
+  location            = data.azurerm_resource_group.current.location
+  resource_group_name = data.azurerm_resource_group.current.name
 }
 
 # Subred virtual
@@ -42,7 +48,7 @@ resource "tls_private_key" "keypair" {
 # Key Vault
 resource "azurerm_key_vault" "kvaultmv1" {
   name                = "kvaultmv1"
-  location            = var.location
+  location            = data.azurerm_resource_group.current.location
   resource_group_name = data.azurerm_resource_group.current.name
   tenant_id           = data.azurerm_client_config.current.tenant_id
   sku_name            = "standard"
@@ -89,7 +95,7 @@ resource "azurerm_key_vault_secret" "secret" {
 # Interfaz de red
 resource "azurerm_network_interface" "nic1" {
   name                = "nic1"
-  location            = var.location
+  location            = data.azurerm_resource_group.current.location
   resource_group_name = data.azurerm_resource_group.current.name
 
   ip_configuration {
@@ -103,7 +109,7 @@ resource "azurerm_network_interface" "nic1" {
 # Máquina virtual
 resource "azurerm_linux_virtual_machine" "vm1" {
   name                = "vm1"
-  location            = var.location
+  location            = data.azurerm_resource_group.current.location
   resource_group_name = data.azurerm_resource_group.current.name
   size                = "Standard_B2s"
 
