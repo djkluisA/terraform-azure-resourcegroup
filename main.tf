@@ -64,8 +64,7 @@ resource "azurerm_key_vault" "kvaultmv1" {
   location                    = data.azurerm_resource_group.resource-group.location
   tenant_id                   = data.azurerm_client_config.current.tenant_id
   sku_name                    = "standard"
-  soft_delete_enabled         = true
-  purge_protection_enabled    = false
+  
   network_acls {
     default_action            = "Deny"
     bypass                     = "AzureServices"
@@ -118,6 +117,10 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     username = "azureuser"
     public_key = azurerm_key_vault_secret.public-key.value
   }
+
+  network_interface_ids = [
+    azurerm_network_interface.nic1.id
+  ]
 }
 
 # Declaración de variables
