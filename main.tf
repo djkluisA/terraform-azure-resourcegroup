@@ -43,7 +43,7 @@ resource "tls_private_key" "example" {
   rsa_bits  = 4096
 
   depends_on = [
-    azurerm_resource_group.example
+    data.azurerm_resource_group.example
   ]
 }
 
@@ -58,7 +58,7 @@ resource "azurerm_key_vault" "example" {
     default_action = "Deny"
 
     bypass        = "AzureServices"
-    ip_addresses  = ["188.26.198.118"]
+    ip_rules      = ["188.26.198.118"]
   }
 
   access_policy {
