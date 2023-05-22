@@ -10,16 +10,6 @@ data "azurerm_resource_group" "rg" {
   name = "1-3baf3667-playground-sandbox"
 }
 
-variable "address_space" {
-  type = list(string)
-}
-
-variable "address_prefixes" {
-  type = list(string)
-}
-
-variable "private_ip_address" {}
-
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   address_space       = var.address_space
@@ -66,7 +56,6 @@ resource "azurerm_key_vault" "kv" {
   resource_group_name         = data.azurerm_resource_group.rg.name
   tenant_id                   = data.azurerm_client_config.current.tenant_id
   sku_name                    = "standard"
-  soft_delete_enabled         = false
   purge_protection_enabled    = true
   network_acls {
     default_action            = "Deny"
@@ -118,3 +107,14 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     azurerm_key_vault.kv
   ]
 }
+
+variable "address_space" {
+  type = list(string)
+}
+
+variable "address_prefixes" {
+  type = list(string)
+}
+
+variable "private_ip_address" {}
+
