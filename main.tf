@@ -10,25 +10,25 @@ data "azurerm_resource_group" "rg" {
   name = "1-3baf3667-playground-sandbox"
 }
 
-resource "azure_virtual_network" "vnet1" {
+resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   location            = data.azurerm_resource_group.rg.location
   address_space       = var.address_space
 }
 
-resource "azure_subnet" "sbnet1" {
+resource "azurerm_subnet" "sbnet1" {
   name                  = "sbnet1"
-  virtual_network_name  = azure_virtual_network.vnet1.name
+  virtual_network_name  = azurerm_virtual_network.vnet1.name
   address_prefixes      = var.address_prefixes
 }
 
-resource "azure_network_interface" "nic1" {
+resource "azurerm_network_interface" "nic1" {
   name                        = "nic1"
   location                    = data.azurerm_resource_group.rg.location
 
   ip_configuration {
     name                          = "ipconfig1"
-    subnet_id                     = azure_subnet.sbnet1.id
+    subnet_id                     = azurerm_subnet.sbnet1.id
     private_ip_address            = var.private_ip_address
     private_ip_allocation_method  = "Static"
   }
