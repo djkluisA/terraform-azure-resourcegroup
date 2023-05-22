@@ -126,3 +126,4 @@ variable "address_space" {}
 variable "address_prefixes" {}
 
 variable "private_ip_address" {}
+
