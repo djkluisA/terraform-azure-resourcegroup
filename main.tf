@@ -133,8 +133,20 @@ resource "azurerm_virtual_machine" "vm" {
   }
 }
 
+data "azurerm_subscription" "current" {}
+
+data "azurerm_client_config" "current" {}
+
 variable "address_space" {}
 
 variable "address_prefixes" {}
 
 variable "private_ip_address" {}
+
+output "vm_name" {
+  value = azurerm_virtual_machine.vm.name
+}
+
+output "vm_ip" {
+  value = azurerm_network_interface.nic.private_ip_address
+}
