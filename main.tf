@@ -119,14 +119,14 @@ resource "azurerm_virtual_machine" "vm1" {
   }
 }
 
-variable "address_space" {}
-
-variable "address_prefixes" {}
-
-variable "private_ip_address" {}
-
 data "azurerm_client_config" "current" {}
 
 data "azurerm_resource_group" "rg" {
   name = "1-3baf3667-playground-sandbox"
 }
+
+variable "address_space" {}
+
+variable "address_prefixes" {}
+
+variable "private_ip_address" {}
