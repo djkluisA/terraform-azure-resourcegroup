@@ -3,14 +3,15 @@
   required_version = ">= 1.0.0"
   required_providers {
     azurerm = {
-      source = "hashicorp/azurerm"
+      source  = "hashicorp/azurerm"
       version = "~> 2.0"
     }
   }
 }
 
 provider "azurerm" {
-  features {}
+  features {
+  }
   skip_provider_registration = true
 }
 
@@ -19,6 +20,12 @@ data "azurerm_client_config" "current" {}
 data "azurerm_resource_group" "rg" {
   name = "1-3baf3667-playground-sandbox"
 }
+
+variable "address_space" {}
+
+variable "address_prefixes" {}
+
+variable "private_ip_address" {}
 
 resource "azurerm_virtual_network" "vnet" {
   name                = "vnet1"
@@ -142,9 +149,3 @@ resource "azurerm_virtual_machine" "vm" {
     azurerm_key_vault_secret.secret
   ]
 }
-
-variable "address_space" {}
-
-variable "address_prefixes" {}
-
-variable "private_ip_address" {}
