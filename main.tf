@@ -1,39 +1,71 @@
 
-# Configuración del proveedor de Azure
 provider "azurerm" {
-  skip_provider_registration = true
   features {}
+  skip_provider_registration = true
 }
 
-# Obtención del grupo de recursos
-data "azurerm_resource_group" "resource-group" {
+data "azurerm_client_config" "current" {}
+
+data "azurerm_resource_group" "sandbox" {
   name = "1-3baf3667-playground-sandbox"
 }
 
-# Obtención de la configuración del cliente
-data "azurerm_client_config" "current" {}
+resource "tls_private_key" "key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
 
-# Creación de la red virtual
+  depends_on = [
+    data.azurerm_client_config.current
+  ]
+}
+
+resource "azurerm_key_vault" "kvaultmv1" {
+  name                = "kvaultmv1"
+  location            = data.azurerm_resource_group.sandbox.location
+  resource_group_name = data.azurerm_resource_group.sandbox.name
+  tenant_id           = data.azurerm_client_config.current.tenant_id
+  sku_name            = "standard"
+
+  network_acls {
+    default_action = "Deny"
+    bypass         = "AzureServices"
+    ip_rules       = ["188.26.198.118"]
+  }
+
+  access_policy {
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = data.azurerm_client_config.current.object_id
+    secret_permissions = [
+      "Get",
+      "List",
+      "Set",
+      "Delete",
+      "Recover",
+      "Backup",
+      "Restore",
+      "Purge",
+    ]
+  }
+}
+
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   address_space       = var.address_space
-  location            = data.azurerm_resource_group.resource-group.location
-  resource_group_name = data.azurerm_resource_group.resource-group.name
+  location            = data.azurerm_resource_group.sandbox.location
+  resource_group_name = data.azurerm_resource_group.sandbox.name
 }
 
-# Creación de la subred virtual
 resource "azurerm_subnet" "sbnet1" {
-  name                  = "sbnet1"
-  resource_group_name   = data.azurerm_resource_group.resource-group.name
-  virtual_network_name  = azurerm_virtual_network.vnet1.name
-  address_prefixes      = var.address_prefixes
+  name                 = "sbnet1"
+  resource_group_name  = data.azurerm_resource_group.sandbox.name
+  virtual_network_name = azurerm_virtual_network.vnet1.name
+  address_prefixes     = var.address_prefixes
 }
 
-# Creación de la interfaz de red
 resource "azurerm_network_interface" "nic1" {
   name                = "nic1"
-  location            = data.azurerm_resource_group.resource-group.location
-  resource_group_name = data.azurerm_resource_group.resource-group.name
+  location            = data.azurerm_resource_group.sandbox.location
+  resource_group_name = data.azurerm_resource_group.sandbox.name
 
   ip_configuration {
     name                          = "ipconfig1"
@@ -43,60 +75,13 @@ resource "azurerm_network_interface" "nic1" {
   }
 }
 
-# Creación del recurso tls_private_key
-resource "tls_private_key" "key-pair" {
-  algorithm   = "RSA"
-  rsa_bits    = 4096
-
-  depends_on = [azurerm_key_vault.kvaultmv1]
-
-  lifecycle {
-    create_before_destroy = false
-    ignore_changes        = []
-    prevent_destroy       = false
-  }
-}
-
-# Creación del key vault
-resource "azurerm_key_vault" "kvaultmv1" {
-  name                        = "kvaultmv1"
-  resource_group_name         = data.azurerm_resource_group.resource-group.name
-  location                    = data.azurerm_resource_group.resource-group.location
-  tenant_id                   = data.azurerm_client_config.current.tenant_id
-  sku_name                    = "standard"
-  
-  network_acls {
-    default_action            = "Deny"
-    bypass                     = "AzureServices"
-    ip_rules                   = ["188.26.198.118"]
-  }
-
-  access_policy {
-    tenant_id                 = data.azurerm_client_config.current.tenant_id
-    object_id                 = data.azurerm_client_config.current.object_id
-    secret_permissions        = ["Get", "List", "Set", "Delete", "Recover", "Backup", "Restore", "Purge"]
-  }
-}
-
-# Creación de los secrets del key vault
-resource "azurerm_key_vault_secret" "public-key" {
-  name         = "public-clave"
-  value        = tls_private_key.key-pair.public_key_pem
-  key_vault_id = azurerm_key_vault.kvaultmv1.id
-}
-
-resource "azurerm_key_vault_secret" "private-key" {
-  name         = "secret-clave"
-  value        = tls_private_key.key-pair.private_key_pem
-  key_vault_id = azurerm_key_vault.kvaultmv1.id
-}
-
-# Creación de la máquina virtual Linux
 resource "azurerm_linux_virtual_machine" "vm1" {
   name                  = "vm1"
-  location              = data.azurerm_resource_group.resource-group.location
-  resource_group_name   = data.azurerm_resource_group.resource-group.name
+  location              = data.azurerm_resource_group.sandbox.location
+  resource_group_name   = data.azurerm_resource_group.sandbox.name
   size                  = "Standard_B2s"
+  admin_username        = "azureuser"
+  network_interface_ids = [azurerm_network_interface.nic1.id]
 
   source_image_reference {
     publisher = "Canonical"
@@ -105,25 +90,14 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     version   = "latest"
   }
 
-  admin_username = "azureuser"
-
   os_disk {
-    name              = "osdisk"
+    name              = "osdisk1"
     caching           = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
 
   admin_ssh_key {
-    username = "azureuser"
-    public_key = azurerm_key_vault_secret.public-key.value
+    username   = "azureuser"
+    public_key = azurerm_key_vault.kvaultmv1.get_secret("public-clave").value
   }
-
-  network_interface_ids = [
-    azurerm_network_interface.nic1.id
-  ]
 }
-
-# Declaración de variables
-variable "address_space" {}
-variable "address_prefixes" {}
-variable "private_ip_address" {}
