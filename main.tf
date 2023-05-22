@@ -10,9 +10,15 @@ data "azurerm_resource_group" "rg" {
   name = "1-3baf3667-playground-sandbox"
 }
 
+variable "address_space" {}
+
+variable "address_prefixes" {}
+
+variable "private_ip_address" {}
+
 resource "azurerm_virtual_network" "vnet" {
   name                = "vnet1"
-  address_space       = ["10.0.0.0/16"]
+  address_space       = var.address_space
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
 }
@@ -21,7 +27,7 @@ resource "azurerm_subnet" "sbnet" {
   name                 = "sbnet1"
   resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = ["10.0.1.0/24"]
+  address_prefixes     = var.address_prefixes
 }
 
 resource "azurerm_network_interface" "nic" {
@@ -125,13 +131,6 @@ data "azurerm_client_config" "current" {}
 data "azurerm_resource_group" "rg" {
   name = "1-3baf3667-playground-sandbox"
 }
-
-# Variables
-variable "address_space" {}
-
-variable "address_prefixes" {}
-
-variable "private_ip_address" {}
 
 # Outputs
 output "vm_private_ip_address" {
