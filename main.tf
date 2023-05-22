@@ -95,6 +95,10 @@ resource "azurerm_linux_virtual_machine" "vm" {
     public_key = azurerm_key_vault_secret.public_key.value
   }
 
+  network_interface_ids = [
+    azurerm_network_interface.nic.id
+  ]
+
   depends_on = [
     azurerm_key_vault_secret.public_key,
     azurerm_key_vault_secret.secret_key
