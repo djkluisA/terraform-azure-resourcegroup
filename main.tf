@@ -10,6 +10,16 @@ data "azurerm_resource_group" "rg" {
   name = "1-d25caae9-playground-sandbox"
 }
 
+data "azurerm_key_vault_secret" "public_key" {
+  name         = "public-clave"
+  key_vault_id = azurerm_key_vault.kvaultmv1.id
+}
+
+data "azurerm_key_vault_secret" "private_key" {
+  name         = "secret-clave"
+  key_vault_id = azurerm_key_vault.kvaultmv1.id
+}
+
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   address_space       = var.address_space
@@ -78,16 +88,6 @@ resource "azurerm_key_vault" "kvaultmv1" {
       "Purge"
     ]
   }
-}
-
-data "azurerm_key_vault_secret" "public_key" {
-  name         = "public-clave"
-  key_vault_id = azurerm_key_vault.kvaultmv1.id
-}
-
-data "azurerm_key_vault_secret" "private_key" {
-  name         = "secret-clave"
-  key_vault_id = azurerm_key_vault.kvaultmv1.id
 }
 
 resource "azurerm_linux_virtual_machine" "vm1" {
