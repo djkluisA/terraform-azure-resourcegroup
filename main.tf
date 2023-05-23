@@ -124,6 +124,4 @@ variable "address_space" {}
 
 variable "address_prefixes" {}
 
-variable "miip" {}
-
 variable "private_ip_address" {}
