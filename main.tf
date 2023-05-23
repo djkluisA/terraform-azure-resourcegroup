@@ -69,7 +69,7 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     admin_password = "Manolita3232"
   }
 
-  source_image_reference {
+  storage_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
     sku       = "18.04-LTS"
