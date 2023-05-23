@@ -57,20 +57,16 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     azurerm_network_interface.nic1.id,
   ]
 
-  storage_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
-    version   = "latest"
-  }
-
   os_disk {
     name              = "osdisk1"
     caching           = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
 
-  admin_username                = "azureuser"
-  admin_password                = "Manolita3232"
-  disable_password_authentication = false
+  os_profile {
+    computer_name  = "hostname"
+    admin_username = "azureuser"
+    admin_password = "Manolita3232"
+  }
 }
+
