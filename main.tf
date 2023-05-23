@@ -40,7 +40,7 @@ resource "azurerm_network_interface" "nic1" {
 
 resource "tls_private_key" "key" {
   algorithm = "RSA"
-  size      = 4096
+  rsa_bits  = 4096
 }
 
 resource "azurerm_key_vault" "kvaultmv1" {
