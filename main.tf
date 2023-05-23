@@ -8,6 +8,16 @@ data "azurerm_resource_group" "rg" {
   name = "1-d25caae9-playground-sandbox"
 }
 
+variable "address_prefixes" {
+  type = list(string)
+  default = ["10.0.1.0/24"]
+}
+
+variable "private_ip_address" {
+  type = string
+  default = "10.0.1.4"
+}
+
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   address_space       = ["10.0.0.0/16"]
@@ -19,7 +29,7 @@ resource "azurerm_subnet" "sbnet1" {
   name                 = "sbnet1"
   resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = ["10.0.1.0/24"]
+  address_prefixes     = var.address_prefixes
 }
 
 resource "azurerm_network_interface" "nic1" {
@@ -30,8 +40,22 @@ resource "azurerm_network_interface" "nic1" {
   ip_configuration {
     name                          = "ipconfig1"
     subnet_id                     = azurerm_subnet.sbnet1.id
-    private_ip_address            = "10.0.1.4"
+    private_ip_address            = var.private_ip_address
     private_ip_address_allocation = "Static"
+  }
+}
+
+resource "azurerm_managed_disk" "osdisk1" {
+  name                 = "osdisk1"
+  location             = data.azurerm_resource_group.rg.location
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  storage_account_type = "Standard_LRS"
+  create_option        = "FromImage"
+  image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
   }
 }
 
@@ -48,16 +72,9 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     azurerm_network_interface.nic1.id,
   ]
 
-  storage_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
-    version   = "latest"
-  }
-
   os_disk {
-    name              = "osdisk1"
+    name              = azurerm_managed_disk.osdisk1.name
+    managed_disk_id   = azurerm_managed_disk.osdisk1.id
     caching           = "ReadWrite"
-    storage_account_type = "Standard_LRS"
   }
 }
