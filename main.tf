@@ -1,43 +1,22 @@
 
-provider "azurerm" {
-  skip_provider_registration = true
-  features {}
-}
-
-data "azurerm_resource_group" "existing" {
-  name = "1-3baf3667-playground-sandbox"
-}
-
-variable "address_space" {
-  default = ["10.0.0.0/16"]
-}
-
-variable "address_prefixes" {
-  default = ["10.0.1.0/24"]
-}
-
-variable "private_ip_address" {
-  default = "10.0.1.4"
-}
-
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   address_space       = var.address_space
-  location            = data.azurerm_resource_group.existing.location
-  resource_group_name = data.azurerm_resource_group.existing.name
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
 }
 
 resource "azurerm_subnet" "sbnet1" {
   name                 = "sbnet1"
-  resource_group_name  = data.azurerm_resource_group.existing.name
+  resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet1.name
   address_prefixes     = var.address_prefixes
 }
 
 resource "azurerm_network_interface" "nic1" {
   name                = "nic1"
-  location            = data.azurerm_resource_group.existing.location
-  resource_group_name = data.azurerm_resource_group.existing.name
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
 
   ip_configuration {
     name                          = "ipconfig1"
@@ -48,10 +27,13 @@ resource "azurerm_network_interface" "nic1" {
 }
 
 resource "azurerm_linux_virtual_machine" "vm1" {
-  name                = "vm1"
-  location            = data.azurerm_resource_group.existing.location
-  resource_group_name = data.azurerm_resource_group.existing.name
-  size                = "Standard_B2s"
+  name                  = "vm1"
+  location              = data.azurerm_resource_group.rg.location
+  resource_group_name   = data.azurerm_resource_group.rg.name
+  size                  = "Standard_B2s"
+  admin_username        = "azureuser"
+  admin_password        = "Manolita3232"
+  disable_password_authentication = false
 
   network_interface_ids = [
     azurerm_network_interface.nic1.id,
@@ -69,8 +51,13 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     caching           = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
+}
 
-  admin_username                = "azureuser"
-  admin_password                = "Manolita3232"
-  disable_password_authentication = false
+data "azurerm_resource_group" "rg" {
+  name = "1-d25caae9-playground-sandbox"
+}
+
+provider "azurerm" {
+  features {}
+  skip_provider_registration = true
 }
