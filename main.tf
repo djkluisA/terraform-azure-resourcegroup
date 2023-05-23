@@ -4,17 +4,7 @@ provider "azurerm" {
   skip_provider_registration = true
 }
 
-variable "address_space" {
-  type = list(string)
-}
-
-variable "private_ip_address" {
-  type = string
-}
-
-variable "address_prefixes" {
-  type = list(string)
-}
+data "azurerm_client_config" "current" {}
 
 data "azurerm_resource_group" "rg" {
   name = "1-d25caae9-playground-sandbox"
@@ -47,6 +37,59 @@ resource "azurerm_network_interface" "nic1" {
   }
 }
 
+resource "tls_private_key" "key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+
+  depends_on = [
+    azurerm_key_vault.kvaultmv1
+  ]
+}
+
+resource "azurerm_key_vault" "kvaultmv1" {
+  name                = "kvaultmv1"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  tenant_id           = data.azurerm_client_config.current.tenant_id
+  sku_name            = "standard"
+
+  network_acls {
+    default_action = "Deny"
+
+    bypass = "AzureServices"
+
+    ip_rules = [
+      var.miip
+    ]
+  }
+
+  access_policy {
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = data.azurerm_client_config.current.object_id
+
+    secret_permissions = [
+      "Get",
+      "List",
+      "Set",
+      "Delete",
+      "Recover",
+      "Backup",
+      "Restore",
+      "Purge"
+    ]
+  }
+}
+
+data "azurerm_key_vault_secret" "public_key" {
+  name         = "public-clave"
+  key_vault_id = azurerm_key_vault.kvaultmv1.id
+}
+
+data "azurerm_key_vault_secret" "private_key" {
+  name         = "secret-clave"
+  key_vault_id = azurerm_key_vault.kvaultmv1.id
+}
+
 resource "azurerm_linux_virtual_machine" "vm1" {
   name                = "vm1"
   location            = data.azurerm_resource_group.rg.location
@@ -66,11 +109,10 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     storage_account_type = "Standard_LRS"
   }
 
-  admin_username                = "azureuser"
-  admin_password                = "Manolita3232"
-  disable_password_authentication = false
+  admin_username = "azureuser"
 
-  network_interface_ids = [
-    azurerm_network_interface.nic1.id,
-  ]
+  admin_ssh_key {
+    username   = "azureuser"
+    public_key = data.azurerm_key_vault_secret.public_key.value
+  }
 }
