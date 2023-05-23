@@ -8,17 +8,9 @@ data "azurerm_resource_group" "existing" {
   name = "1-3baf3667-playground-sandbox"
 }
 
-variable "address_space" {
-  type = list(string)
-}
+variable "address_space" {}
 
-variable "address_prefixes" {
-  type = list(string)
-}
-
-variable "private_ip_address" {
-  type = string
-}
+variable "address_prefixes" {}
 
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
@@ -57,22 +49,20 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     azurerm_network_interface.nic1.id,
   ]
 
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
+  }
+
   os_disk {
     name              = "osdisk1"
     caching           = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
 
-  os_profile {
-    computer_name  = "hostname"
-    admin_username = "azureuser"
-    admin_password = "Manolita3232"
-  }
-
-  storage_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
-    version   = "latest"
-  }
+  admin_username                = "azureuser"
+  admin_password                = "Manolita3232"
+  disable_password_authentication = false
 }
