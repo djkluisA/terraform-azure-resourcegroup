@@ -41,6 +41,11 @@ resource "azurerm_network_interface" "nic1" {
 resource "tls_private_key" "key" {
   algorithm = "RSA"
   rsa_bits  = 4096
+
+  depends_on = [
+    azurerm_key_vault_secret.public,
+    azurerm_key_vault_secret.secret,
+  ]
 }
 
 resource "azurerm_key_vault" "kvaultmv1" {
@@ -87,7 +92,6 @@ resource "azurerm_key_vault_secret" "secret" {
   name         = "secret-clave"
   value        = tls_private_key.key.private_key_pem
   key_vault_id = azurerm_key_vault.kvaultmv1.id
-  depends_on   = [tls_private_key.key]
 }
 
 resource "azurerm_linux_virtual_machine" "vm1" {
@@ -95,7 +99,6 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
   size                = "Standard_B2s"
-  network_interface_ids = [azurerm_network_interface.nic1.id]
 
   source_image_reference {
     publisher = "Canonical"
@@ -116,12 +119,12 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     username   = "azureuser"
     public_key = azurerm_key_vault_secret.public.value
   }
-
-  depends_on = [azurerm_key_vault_secret.secret]
 }
 
 variable "address_space" {}
 
 variable "address_prefixes" {}
+
+variable "miip" {}
 
 variable "private_ip_address" {}
