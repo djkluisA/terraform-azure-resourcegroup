@@ -8,9 +8,17 @@ data "azurerm_resource_group" "existing" {
   name = "1-3baf3667-playground-sandbox"
 }
 
-variable "address_space" {}
+variable "address_space" {
+  default = ["10.0.0.0/16"]
+}
 
-variable "address_prefixes" {}
+variable "address_prefixes" {
+  default = ["10.0.1.0/24"]
+}
+
+variable "private_ip_address" {
+  default = "10.0.1.4"
+}
 
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
