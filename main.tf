@@ -51,12 +51,6 @@ resource "azurerm_managed_disk" "osdisk1" {
   resource_group_name  = data.azurerm_resource_group.rg.name
   storage_account_type = "Standard_LRS"
   create_option        = "FromImage"
-  image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
-    version   = "latest"
-  }
 }
 
 resource "azurerm_linux_virtual_machine" "vm1" {
