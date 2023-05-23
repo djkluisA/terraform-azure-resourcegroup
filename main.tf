@@ -113,7 +113,7 @@ resource "azurerm_linux_virtual_machine" "vm1" {
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = azurerm_key_vault_secret.public.value
+    public_key = tls_private_key.key.public_key_openssh
   }
 }
 
