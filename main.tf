@@ -12,6 +12,10 @@ variable "private_ip_address" {
   type = string
 }
 
+variable "address_prefixes" {
+  type = list(string)
+}
+
 data "azurerm_resource_group" "rg" {
   name = "1-d25caae9-playground-sandbox"
 }
