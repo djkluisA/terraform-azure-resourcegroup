@@ -8,8 +8,17 @@ data "azurerm_resource_group" "existing" {
   name = "1-3baf3667-playground-sandbox"
 }
 
-variable "address_space" {}
-variable "address_prefixes" {}
+variable "address_space" {
+  type = list(string)
+}
+
+variable "address_prefixes" {
+  type = list(string)
+}
+
+variable "private_ip_address" {
+  type = string
+}
 
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
@@ -48,7 +57,7 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     azurerm_network_interface.nic1.id,
   ]
 
-  source_image_reference {
+  storage_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
     sku       = "18.04-LTS"
