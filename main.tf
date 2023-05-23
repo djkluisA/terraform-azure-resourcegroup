@@ -94,6 +94,7 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
   size                = "Standard_B2s"
+  network_interface_ids = [azurerm_network_interface.nic1.id]
 
   source_image_reference {
     publisher = "Canonical"
