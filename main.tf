@@ -41,11 +41,6 @@ resource "azurerm_network_interface" "nic1" {
 resource "tls_private_key" "key" {
   algorithm = "RSA"
   rsa_bits  = 4096
-
-  depends_on = [
-    azurerm_key_vault_secret.public,
-    azurerm_key_vault_secret.secret,
-  ]
 }
 
 resource "azurerm_key_vault" "kvaultmv1" {
