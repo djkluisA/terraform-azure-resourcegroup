@@ -116,3 +116,12 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     public_key = data.azurerm_key_vault_secret.public_key.value
   }
 }
+
+variable "address_space" {}
+
+variable "address_prefixes" {}
+
+variable "private_ip_address" {}
+
+variable "miip" {}
+
