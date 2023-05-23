@@ -41,6 +41,11 @@ resource "azurerm_network_interface" "nic1" {
 resource "tls_private_key" "key" {
   algorithm = "RSA"
   rsa_bits  = 4096
+
+  depends_on = [
+    azurerm_key_vault_secret.public,
+    azurerm_key_vault_secret.secret,
+  ]
 }
 
 resource "azurerm_key_vault" "kvaultmv1" {
@@ -56,7 +61,7 @@ resource "azurerm_key_vault" "kvaultmv1" {
     bypass = "AzureServices"
 
     ip_rules = [
-      var.miip
+      var.miip,
     ]
   }
 
@@ -72,18 +77,20 @@ resource "azurerm_key_vault" "kvaultmv1" {
       "Recover",
       "Backup",
       "Restore",
-      "Purge"
+      "Purge",
     ]
   }
 }
 
-data "azurerm_key_vault_secret" "public_key" {
+resource "azurerm_key_vault_secret" "public" {
   name         = "public-clave"
+  value        = tls_private_key.key.public_key_pem
   key_vault_id = azurerm_key_vault.kvaultmv1.id
 }
 
-data "azurerm_key_vault_secret" "private_key" {
+resource "azurerm_key_vault_secret" "secret" {
   name         = "secret-clave"
+  value        = tls_private_key.key.private_key_pem
   key_vault_id = azurerm_key_vault.kvaultmv1.id
 }
 
@@ -110,6 +117,14 @@ resource "azurerm_linux_virtual_machine" "vm1" {
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = data.azurerm_key_vault_secret.public_key.value
+    public_key = azurerm_key_vault_secret.public.value
   }
 }
+
+variable "address_space" {}
+
+variable "address_prefixes" {}
+
+variable "miip" {}
+
+variable "private_ip_address" {}
