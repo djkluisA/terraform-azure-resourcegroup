@@ -10,6 +10,12 @@ data "azurerm_resource_group" "rg" {
   name = "1-d25caae9-playground-sandbox"
 }
 
+variable "address_space" {}
+
+variable "address_prefixes" {}
+
+variable "private_ip_address" {}
+
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   address_space       = var.address_space
