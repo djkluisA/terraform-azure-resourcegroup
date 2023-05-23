@@ -1,7 +1,16 @@
 
+provider "azurerm" {
+  features {}
+  skip_provider_registration = true
+}
+
+data "azurerm_resource_group" "rg" {
+  name = "1-d25caae9-playground-sandbox"
+}
+
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
-  address_space       = var.address_space
+  address_space       = ["10.0.0.0/16"]
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
 }
@@ -10,7 +19,7 @@ resource "azurerm_subnet" "sbnet1" {
   name                 = "sbnet1"
   resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = var.address_prefixes
+  address_prefixes     = ["10.0.1.0/24"]
 }
 
 resource "azurerm_network_interface" "nic1" {
@@ -21,7 +30,7 @@ resource "azurerm_network_interface" "nic1" {
   ip_configuration {
     name                          = "ipconfig1"
     subnet_id                     = azurerm_subnet.sbnet1.id
-    private_ip_address            = var.private_ip_address
+    private_ip_address            = "10.0.1.4"
     private_ip_address_allocation = "Static"
   }
 }
@@ -39,7 +48,7 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     azurerm_network_interface.nic1.id,
   ]
 
-  source_image_reference {
+  storage_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
     sku       = "18.04-LTS"
@@ -51,13 +60,4 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     caching           = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
-}
-
-data "azurerm_resource_group" "rg" {
-  name = "1-d25caae9-playground-sandbox"
-}
-
-provider "azurerm" {
-  features {}
-  skip_provider_registration = true
 }
