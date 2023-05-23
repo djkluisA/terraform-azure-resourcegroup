@@ -1,7 +1,8 @@
 
 provider "azurerm" {
-  features {}
   skip_provider_registration = true
+
+  features {}
 }
 
 data "azurerm_client_config" "current" {}
@@ -39,11 +40,7 @@ resource "azurerm_network_interface" "nic1" {
 
 resource "tls_private_key" "key" {
   algorithm = "RSA"
-  rsa_bits  = 4096
-
-  depends_on = [
-    azurerm_key_vault.kvaultmv1
-  ]
+  size      = 4096
 }
 
 resource "azurerm_key_vault" "kvaultmv1" {
