@@ -10,6 +10,12 @@ data "azurerm_resource_group" "rg" {
   name = "1-dcddda38-playground-sandbox"
 }
 
+variable "address_space" {}
+
+variable "address_prefixes" {}
+
+variable "private_ip_address" {}
+
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   address_space       = var.address_space
@@ -116,15 +122,3 @@ resource "azurerm_virtual_machine" "vm1" {
     azurerm_network_interface.nic1.id,
   ]
 }
-
-data "azurerm_client_config" "current" {}
-
-data "azurerm_resource_group" "rg" {
-  name = "1-dcddda38-playground-sandbox"
-}
-
-variable "address_space" {}
-
-variable "address_prefixes" {}
-
-variable "private_ip_address" {}
