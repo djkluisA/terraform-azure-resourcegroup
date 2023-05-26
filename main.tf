@@ -46,7 +46,6 @@ resource "azurerm_network_interface_backend_address_pool_association" "nic1" {
 resource "azurerm_lb_backend_address_pool" "pool1" {
   name                = "pool1"
   loadbalancer_id     = azurerm_lb.lb1.id
-  backend_address_pool_name = "pool1"
 }
 
 resource "azurerm_lb" "lb1" {
