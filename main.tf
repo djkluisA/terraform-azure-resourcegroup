@@ -10,6 +10,9 @@ provider "aws" {
   skip_metadata_api_check = true
   skip_credentials_validation = true
   skip_requesting_account_id = true
+  skip_provider_registration = true
+
+  features {}
 }
 
 # Creación de la red virtual
@@ -86,10 +89,12 @@ resource "aws_instance" "vm1" {
 
   root_block_device {
     volume_type = "gp2"
+    device_name = "/dev/sda1"
   }
 
   ebs_block_device {
     volume_type = "t2.micro"
+    device_name = "/dev/sdb"
   }
 
   tags = {
