@@ -4,6 +4,17 @@ variable "address_space" {}
 variable "address_prefixes" {}
 variable "private_ip_address" {}
 
+# Configuración del proveedor de AWS
+provider "aws" {
+  region                  = "us-east-1"
+  skip_provider_registration = true
+  features {
+    cloudwatch_logs = {
+      log_group_name = "-logs"
+    }
+  }
+}
+
 # Creación de la red virtual
 resource "aws_vpc" "vnet1" {
   cidr_block = var.address_space
@@ -15,11 +26,24 @@ resource "aws_subnet" "sbnet1" {
   cidr_block = var.address_prefixes
 }
 
-# Creación de la interfaz de red
-resource "aws_network_interface" "nic1" {
-  subnet_id       = aws_subnet.sbnet1.id
-  private_ips     = [var.private_ip_address]
-  security_groups = [aws_security_group.sg1.id]
+# Creación del grupo de seguridad
+resource "aws_security_group" "sg1" {
+  name_prefix = "sg1"
+  vpc_id      = aws_vpc.vnet1.id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 
 # Creación de la clave privada
@@ -83,25 +107,5 @@ resource "aws_instance" "vm1" {
       "sudo systemctl start apache2",
       "sudo systemctl enable apache2"
     ]
-  }
-}
-
-# Creación del grupo de seguridad
-resource "aws_security_group" "sg1" {
-  name_prefix = "sg1"
-  vpc_id      = aws_vpc.vnet1.id
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
   }
 }
