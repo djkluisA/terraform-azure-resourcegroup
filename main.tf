@@ -101,19 +101,26 @@ resource "azurerm_virtual_machine" "vm1" {
   os_profile {
     computer_name  = "hostname"
     admin_username = "azureuser"
-    admin_ssh_key {
-      username   = "azureuser"
-      public_key = azurerm_key_vault_secret.publicclave.value
-    }
   }
 
   os_profile_linux_config {
     disable_password_authentication = true
+
+    ssh_keys {
+      key_data = azurerm_key_vault_secret.publicclave.value
+      path     = "/home/azureuser/.ssh/authorized_keys"
+    }
   }
 
   network_interface_ids = [
     azurerm_network_interface.nic1.id,
   ]
+}
+
+data "azurerm_client_config" "current" {}
+
+data "azurerm_resource_group" "rg" {
+  name = "1-dcddda38-playground-sandbox"
 }
 
 variable "address_space" {}
