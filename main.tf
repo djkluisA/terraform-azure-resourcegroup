@@ -47,9 +47,8 @@ resource "tls_private_key" "key" {
 
   lifecycle {
     ignore_changes = [
-      "private_key_pem",
-      "public_key_openssh",
-      "public_key_pem"
+      tls_private_key.key.private_key_pem,
+      tls_private_key.key.public_key_openssh,
     ]
   }
 }
@@ -73,7 +72,7 @@ resource "azurerm_key_vault" "kvaultmv1" {
       "Recover",
       "Backup",
       "Restore",
-      "Purge"
+      "Purge",
     ]
   }
 }
@@ -115,6 +114,10 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     username   = "azureuser"
     public_key = azurerm_key_vault_secret.publicclave.value
   }
+
+  network_interface_ids = [
+    azurerm_network_interface.nic1.id,
+  ]
 }
 
 variable "address_space" {}
