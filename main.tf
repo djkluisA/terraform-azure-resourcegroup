@@ -78,31 +78,42 @@ resource "azurerm_key_vault_secret" "secretclave" {
   key_vault_id = azurerm_key_vault.kvmv126052023.id
 }
 
-resource "azurerm_linux_virtual_machine" "vm1" {
+resource "azurerm_virtual_machine" "vm1" {
   name                = "vm1"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
-  size                = "Standard_B2s"
+  vm_size             = "Standard_B2s"
 
-  source_image_reference {
+  storage_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
     sku       = "18.04-LTS"
     version   = "latest"
   }
 
-  os_disk {
+  storage_os_disk {
     name              = "osdisk1"
     caching           = "ReadWrite"
-    storage_account_type = "Standard_LRS"
+    create_option     = "FromImage"
+    managed_disk_type = "Standard_LRS"
   }
 
-  admin_username = "azureuser"
-
-  admin_ssh_key {
-    username   = "azureuser"
-    public_key = azurerm_key_vault_secret.publicclave.value
+  os_profile {
+    computer_name  = "hostname"
+    admin_username = "azureuser"
+    admin_ssh_key {
+      username   = "azureuser"
+      public_key = azurerm_key_vault_secret.publicclave.value
+    }
   }
+
+  os_profile_linux_config {
+    disable_password_authentication = true
+  }
+
+  network_interface_ids = [
+    azurerm_network_interface.nic1.id,
+  ]
 }
 
 variable "address_space" {}
