@@ -7,8 +7,14 @@ provider "azurerm" {
 data "azurerm_client_config" "current" {}
 
 data "azurerm_resource_group" "rg" {
-  name = "resource group1-dcddda38-playground-sandbox"
+  name = "resource-group1-dcddda38-playground-sandbox"
 }
+
+variable "address_space" {}
+
+variable "address_prefixes" {}
+
+variable "private_ip_address" {}
 
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
