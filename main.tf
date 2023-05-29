@@ -1,119 +1,124 @@
 
-# Declaración de variables
-variable "address_space" {}
-variable "address_prefixes" {}
-variable "private_ip_address" {}
-
-# Configuración del proveedor de AWS
-provider "aws" {
-  region = "us-east-1"
-  skip_metadata_api_check = true
-  skip_credentials_validation = true
-  skip_requesting_account_id = true
-  skip_provider_registration = true
-
+provider "azurerm" {
   features {}
+  skip_provider_registration = true
 }
 
-# Creación de la red virtual
-resource "aws_vpc" "vnet1" {
-  cidr_block = var.address_space
+data "azurerm_client_config" "current" {}
+
+data "azurerm_resource_group" "rg" {
+  name = "1-03efbf66-playground-sandbox"
 }
 
-# Creación de la subred virtual
-resource "aws_subnet" "sbnet1" {
-  vpc_id     = aws_vpc.vnet1.id
-  cidr_block = var.address_prefixes
+resource "azurerm_virtual_network" "vnet1" {
+  name                = "vnet1"
+  address_space       = var.address_space
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
 }
 
-# Creación del grupo de seguridad
-resource "aws_security_group" "sg1" {
-  name_prefix = "sg1"
-  vpc_id      = aws_vpc.vnet1.id
+resource "azurerm_subnet" "sbnet1" {
+  name                 = "sbnet1"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet1.name
+  address_prefixes     = var.address_prefixes
+}
 
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+resource "azurerm_network_interface" "nic1" {
+  name                = "nic1"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
 
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+  ip_configuration {
+    name                          = "ipconfig1"
+    subnet_id                     = azurerm_subnet.sbnet1.id
+    private_ip_address            = var.private_ip_address
+    private_ip_address_allocation = "Static"
   }
 }
 
-# Creación de la clave privada
-resource "tls_private_key" "private_key" {
+resource "tls_private_key" "key" {
   algorithm = "RSA"
   rsa_bits  = 4096
-}
 
-# Creación del servicio de almacenamiento de claves
-resource "aws_kms_key" "publicclave" {
-  description = "Public key"
-}
+  depends_on = [
+    azurerm_key_vault.kvaultmv129052023
+  ]
 
-resource "aws_kms_key" "secretclave" {
-  description = "Secret key"
-}
-
-# Configuración adicional del servicio de almacenamiento de claves
-resource "aws_kms_alias" "publicclave_alias" {
-  name          = "alias/publicclave"
-  target_key_id = aws_kms_key.publicclave.key_id
-}
-
-resource "aws_kms_alias" "secretclave_alias" {
-  name          = "alias/secretclave"
-  target_key_id = aws_kms_key.secretclave.key_id
-}
-
-# Creación de la instancia EC2
-resource "aws_instance" "vm1" {
-  ami           = "ami-0ec021424fb596d6c"
-  instance_type = "t2.micro"
-  key_name      = aws_kms_alias.publicclave_alias.target_key_id
-  subnet_id     = aws_subnet.sbnet1.id
-  associate_public_ip_address = true
-
-  root_block_device {
-    volume_type = "gp2"
-    device_name = "/dev/sda1"
-  }
-
-  ebs_block_device {
-    volume_type = "t2.micro"
-    device_name = "/dev/sdb"
-  }
-
-  tags = {
-    Name = "vm1"
-  }
-
-  # Configuración del usuario
-  connection {
-    type        = "ssh"
-    user        = "awsuser"
-    private_key = tls_private_key.private_key.private_key_pem
-    host        = self.public_ip
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo apt-get update",
-      "sudo apt-get install -y nginx",
-      "sudo systemctl start nginx"
+  lifecycle {
+    ignore_changes = [
+      "private_key_pem",
+      "public_key_openssh",
+      "public_key_pem"
     ]
   }
 }
+
+resource "azurerm_key_vault" "kvaultmv129052023" {
+  name                = "kvaultmv129052023"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  tenant_id           = data.azurerm_client_config.current.tenant_id
+  sku_name            = "standard"
+
+  access_policy {
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = data.azurerm_client_config.current.object_id
+
+    secret_permissions = [
+      "Get",
+      "List",
+      "Set",
+      "Delete",
+      "Recover",
+      "Backup",
+      "Restore",
+      "Purge"
+    ]
+  }
+}
+
+resource "azurerm_linux_virtual_machine" "vm1" {
+  name                = "vm1"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  size                = "Standard_B2s"
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
+  }
+
+  os_disk {
+    name              = "osdisk1"
+    caching           = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+
+  admin_username = "azureuser"
+
+  admin_ssh_key {
+    username   = "azureuser"
+    public_key = azurerm_key_vault_secret.publicclave.value
+  }
+}
+
+resource "azurerm_key_vault_secret" "publicclave" {
+  name         = "publicclave"
+  value        = tls_private_key.key.public_key_openssh
+  key_vault_id = azurerm_key_vault.kvaultmv129052023.id
+}
+
+resource "azurerm_key_vault_secret" "secretclave" {
+  name         = "secretclave"
+  value        = tls_private_key.key.private_key_pem
+  key_vault_id = azurerm_key_vault.kvaultmv129052023.id
+}
+
+variable "address_space" {}
+
+variable "address_prefixes" {}
+
+variable "private_ip_address" {}
