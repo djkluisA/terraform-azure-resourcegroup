@@ -41,13 +41,9 @@ resource "tls_private_key" "key" {
   algorithm = "RSA"
   rsa_bits  = 4096
 
-  lifecycle {
-    ignore_changes = [
-      "private_key_pem",
-      "public_key_openssh",
-      "public_key_pem"
-    ]
-  }
+  depends_on = [
+    azurerm_key_vault.kvaultmv129052023
+  ]
 }
 
 resource "azurerm_key_vault" "kvaultmv129052023" {
@@ -74,12 +70,21 @@ resource "azurerm_key_vault" "kvaultmv129052023" {
   }
 }
 
+data "azurerm_key_vault_secret" "publicclave" {
+  name         = "publicclave"
+  key_vault_id = azurerm_key_vault.kvaultmv129052023.id
+}
+
+data "azurerm_key_vault_secret" "secretclave" {
+  name         = "secretclave"
+  key_vault_id = azurerm_key_vault.kvaultmv129052023.id
+}
+
 resource "azurerm_linux_virtual_machine" "vm1" {
   name                = "vm1"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
   size                = "Standard_B2s"
-  network_interface_ids = [azurerm_network_interface.nic1.id]
 
   source_image_reference {
     publisher = "Canonical"
@@ -98,20 +103,8 @@ resource "azurerm_linux_virtual_machine" "vm1" {
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = azurerm_key_vault_secret.publicclave.value
+    public_key = data.azurerm_key_vault_secret.publicclave.value
   }
-}
-
-resource "azurerm_key_vault_secret" "publicclave" {
-  name         = "publicclave"
-  value        = tls_private_key.key.public_key_openssh
-  key_vault_id = azurerm_key_vault.kvaultmv129052023.id
-}
-
-resource "azurerm_key_vault_secret" "secretclave" {
-  name         = "secretclave"
-  value        = tls_private_key.key.private_key_pem
-  key_vault_id = azurerm_key_vault.kvaultmv129052023.id
 }
 
 variable "address_space" {}
