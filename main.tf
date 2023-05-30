@@ -48,9 +48,8 @@ resource "tls_private_key" "key" {
 
   lifecycle {
     ignore_changes = [
-      "private_key_pem",
-      "public_key_openssh",
-      "public_key_pem"
+      azurerm_key_vault_secret.publicclave,
+      azurerm_key_vault_secret.secretclave
     ]
   }
 }
@@ -127,4 +126,3 @@ variable "address_space" {}
 variable "address_prefixes" {}
 
 variable "private_ip_address" {}
-
