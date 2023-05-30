@@ -48,9 +48,11 @@ resource "tls_private_key" "key" {
 
   lifecycle {
     ignore_changes = [
-      private_key_pem,
-      public_key_openssh,
-      public_key_pem
+      # These attributes are decided by the provider alone and therefore there can be no configured value to compare with.
+      # Including them in ignore_changes has no effect. Remove them from ignore_changes to quiet this warning.
+      # "private_key_pem",
+      # "public_key_openssh",
+      # "public_key_pem"
     ]
   }
 }
@@ -104,6 +106,10 @@ resource "azurerm_linux_virtual_machine" "vm" {
     username   = "azureuser"
     public_key = azurerm_key_vault_secret.publicclave.value
   }
+
+  network_interface_ids = [
+    azurerm_network_interface.nic.id
+  ]
 }
 
 resource "azurerm_key_vault_secret" "publicclave" {
