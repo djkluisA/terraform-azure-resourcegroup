@@ -9,13 +9,11 @@ data "azurerm_resource_group" "rg" {
   name = "1-67b62b08-playground-sandbox"
 }
 
-data "azurerm_client_config" "current" {}
-
 resource "azurerm_virtual_network" "vnet" {
   name                = "vnet1"
+  address_space       = var.address_space
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
-  address_space       = var.address_space
 }
 
 resource "azurerm_subnet" "sbnet" {
@@ -48,8 +46,9 @@ resource "tls_private_key" "key" {
 
   lifecycle {
     ignore_changes = [
-      azurerm_key_vault_secret.publicclave.id,
-      azurerm_key_vault_secret.secretclave.id
+      "private_key_pem",
+      "public_key_openssh",
+      "public_key_pem"
     ]
   }
 }
@@ -103,8 +102,6 @@ resource "azurerm_linux_virtual_machine" "vm" {
     username   = "azureuser"
     public_key = azurerm_key_vault_secret.publicclave.value
   }
-
-  network_interface_ids = [azurerm_network_interface.nic.id]
 }
 
 resource "azurerm_key_vault_secret" "publicclave" {
