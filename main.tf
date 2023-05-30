@@ -5,43 +5,43 @@ provider "azurerm" {
   features {}
 }
 
-data "azurerm_resource_group" "rg" {
+data "azurerm_resource_group" "example" {
   name = "1-67b62b08-playground-sandbox"
 }
 
-resource "azurerm_virtual_network" "vnet1" {
+resource "azurerm_virtual_network" "example" {
   name                = "vnet1"
   address_space       = var.address_space
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.example.location
+  resource_group_name = data.azurerm_resource_group.example.name
 }
 
-resource "azurerm_subnet" "sbnet1" {
+resource "azurerm_subnet" "example" {
   name                 = "sbnet1"
-  resource_group_name  = data.azurerm_resource_group.rg.name
-  virtual_network_name = azurerm_virtual_network.vnet1.name
+  resource_group_name  = data.azurerm_resource_group.example.name
+  virtual_network_name = azurerm_virtual_network.example.name
   address_prefixes     = var.address_prefixes
 }
 
-resource "azurerm_network_interface" "nic1" {
+resource "azurerm_network_interface" "example" {
   name                = "nic1"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.example.location
+  resource_group_name = data.azurerm_resource_group.example.name
 
   ip_configuration {
     name                          = "ipconfig1"
-    subnet_id                     = azurerm_subnet.sbnet1.id
+    subnet_id                     = azurerm_subnet.example.id
     private_ip_address            = var.private_ip_address
     private_ip_address_allocation = "Static"
   }
 }
 
-resource "tls_private_key" "key" {
+resource "tls_private_key" "example" {
   algorithm = "RSA"
   rsa_bits  = 4096
 
   depends_on = [
-    azurerm_key_vault.kvault
+    azurerm_key_vault.example
   ]
 
   lifecycle {
@@ -53,10 +53,10 @@ resource "tls_private_key" "key" {
   }
 }
 
-resource "azurerm_key_vault" "kvault" {
+resource "azurerm_key_vault" "example" {
   name                = "kvaultmv129052023"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.example.location
+  resource_group_name = data.azurerm_resource_group.example.name
   tenant_id           = data.azurerm_client_config.current.tenant_id
   sku_name            = "standard"
 
@@ -77,10 +77,10 @@ resource "azurerm_key_vault" "kvault" {
   }
 }
 
-resource "azurerm_linux_virtual_machine" "vm1" {
+resource "azurerm_linux_virtual_machine" "example" {
   name                = "vm1"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.example.location
+  resource_group_name = data.azurerm_resource_group.example.name
   size                = "Standard_B2s"
 
   source_image_reference {
@@ -100,20 +100,20 @@ resource "azurerm_linux_virtual_machine" "vm1" {
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = azurerm_key_vault_secret.publicclave.value
+    public_key = azurerm_key_vault_secret.example.value
   }
 }
 
-resource "azurerm_key_vault_secret" "publicclave" {
+resource "azurerm_key_vault_secret" "example_public" {
   name         = "publicclave"
-  value        = tls_private_key.key.public_key_openssh
-  key_vault_id = azurerm_key_vault.kvault.id
+  value        = tls_private_key.example.public_key_openssh
+  key_vault_id = azurerm_key_vault.example.id
 }
 
-resource "azurerm_key_vault_secret" "secretclave" {
+resource "azurerm_key_vault_secret" "example_secret" {
   name         = "secretclave"
-  value        = tls_private_key.key.private_key_pem
-  key_vault_id = azurerm_key_vault.kvault.id
+  value        = tls_private_key.example.private_key_pem
+  key_vault_id = azurerm_key_vault.example.id
 }
 
 variable "address_space" {}
@@ -122,23 +122,6 @@ variable "address_prefixes" {}
 
 variable "private_ip_address" {}
 
- {
-  required_providers {
-    azurerm = {
-      source = "hashicorp/azurerm"
-      version = "~> 2.0"
-    }
-  }
-
-  required_version = ">= 0.14.0"
-
-  backend "remote" {
-    organization = "<your-organization>"
-    workspaces {
-      name = "<your-workspace>"
-    }
-  }
-
-  # Set the name of the resources
-  prefix = "azureproof"
+locals {
+  azureproof = "azureproof"
 }
