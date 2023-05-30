@@ -9,13 +9,11 @@ data "azurerm_resource_group" "rg" {
   name = "1-67b62b08-playground-sandbox"
 }
 
-data "azurerm_client_config" "current" {}
-
 resource "azurerm_virtual_network" "vnet" {
   name                = "vnet1"
-  address_space       = var.address_space
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
+  address_space       = var.address_space
 }
 
 resource "azurerm_subnet" "sbnet" {
@@ -84,7 +82,6 @@ resource "azurerm_linux_virtual_machine" "vm" {
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
   size                = "Standard_B2s"
-  network_interface_ids = [azurerm_network_interface.nic.id]
 
   source_image_reference {
     publisher = "Canonical"
@@ -103,6 +100,24 @@ resource "azurerm_linux_virtual_machine" "vm" {
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = tls_private_key.key.public_key_openssh
+    public_key = azurerm_key_vault_secret.publicclave.value
   }
 }
+
+resource "azurerm_key_vault_secret" "publicclave" {
+  name         = "publicclave"
+  value        = tls_private_key.key.public_key_openssh
+  key_vault_id = azurerm_key_vault.kv.id
+}
+
+resource "azurerm_key_vault_secret" "secretclave" {
+  name         = "secretclave"
+  value        = tls_private_key.key.private_key_pem
+  key_vault_id = azurerm_key_vault.kv.id
+}
+
+variable "address_space" {}
+
+variable "address_prefixes" {}
+
+variable "private_ip_address" {}
