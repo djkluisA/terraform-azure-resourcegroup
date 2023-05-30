@@ -42,15 +42,11 @@ resource "tls_private_key" "key" {
   algorithm = "RSA"
   rsa_bits  = 4096
 
-  depends_on = [
-    azurerm_key_vault.kv
-  ]
-
   lifecycle {
     ignore_changes = [
-      tls_private_key.key.private_key_pem,
-      tls_private_key.key.public_key_openssh,
-      tls_private_key.key.public_key_pem
+      private_key_pem,
+      public_key_openssh,
+      public_key_pem
     ]
   }
 }
