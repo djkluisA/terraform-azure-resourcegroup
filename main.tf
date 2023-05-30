@@ -48,9 +48,8 @@ resource "tls_private_key" "key" {
 
   lifecycle {
     ignore_changes = [
-      "private_key_pem",
-      "public_key_openssh",
-      "public_key_pem"
+      azurerm_key_vault_secret.publicclave.id,
+      azurerm_key_vault_secret.secretclave.id
     ]
   }
 }
@@ -104,6 +103,8 @@ resource "azurerm_linux_virtual_machine" "vm" {
     username   = "azureuser"
     public_key = azurerm_key_vault_secret.publicclave.value
   }
+
+  network_interface_ids = [azurerm_network_interface.nic.id]
 }
 
 resource "azurerm_key_vault_secret" "publicclave" {
