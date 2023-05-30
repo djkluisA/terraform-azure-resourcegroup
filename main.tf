@@ -6,7 +6,7 @@ provider "azurerm" {
 }
 
 data "azurerm_resource_group" "rg" {
-  name = "1-03efbf66-playground-sandbox"
+  name = "1-67b62b08-playground-sandbox"
 }
 
 resource "azurerm_virtual_network" "vnet" {
@@ -41,7 +41,7 @@ resource "tls_private_key" "key" {
   rsa_bits  = 4096
 
   depends_on = [
-    azurerm_key_vault.kvault
+    azurerm_key_vault.kv
   ]
 
   lifecycle {
@@ -53,7 +53,7 @@ resource "tls_private_key" "key" {
   }
 }
 
-resource "azurerm_key_vault" "kvault" {
+resource "azurerm_key_vault" "kv" {
   name                = "kvaultmv129052023"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
@@ -107,13 +107,13 @@ resource "azurerm_linux_virtual_machine" "vm" {
 resource "azurerm_key_vault_secret" "publicclave" {
   name         = "publicclave"
   value        = tls_private_key.key.public_key_openssh
-  key_vault_id = azurerm_key_vault.kvault.id
+  key_vault_id = azurerm_key_vault.kv.id
 }
 
 resource "azurerm_key_vault_secret" "secretclave" {
   name         = "secretclave"
   value        = tls_private_key.key.private_key_pem
-  key_vault_id = azurerm_key_vault.kvault.id
+  key_vault_id = azurerm_key_vault.kv.id
 }
 
 variable "address_space" {}
