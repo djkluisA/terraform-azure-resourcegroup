@@ -48,9 +48,9 @@ resource "tls_private_key" "key" {
 
   lifecycle {
     ignore_changes = [
-      "private_key_pem",
-      "public_key_openssh",
-      "public_key_pem"
+      private_key_pem,
+      public_key_openssh,
+      public_key_pem
     ]
   }
 }
@@ -106,13 +106,3 @@ resource "azurerm_linux_virtual_machine" "vm" {
     public_key = tls_private_key.key.public_key_openssh
   }
 }
-
-data "azurerm_resource_group" "rg" {
-  name = "1-67b62b08-playground-sandbox"
-}
-
-data "azurerm_client_config" "current" {}
-
-variable "address_space" {}
-variable "address_prefixes" {}
-variable "private_ip_address" {}
