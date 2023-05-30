@@ -1,7 +1,8 @@
 
 provider "azurerm" {
-  features {}
   skip_provider_registration = true
+
+  features {}
 }
 
 data "azurerm_client_config" "current" {}
@@ -44,14 +45,6 @@ resource "tls_private_key" "key" {
   depends_on = [
     azurerm_key_vault.kvaultmv129052023
   ]
-
-  lifecycle {
-    ignore_changes = [
-      "private_key_pem",
-      "public_key_openssh",
-      "public_key_pem"
-    ]
-  }
 }
 
 resource "azurerm_key_vault" "kvaultmv129052023" {
@@ -78,6 +71,16 @@ resource "azurerm_key_vault" "kvaultmv129052023" {
   }
 }
 
+data "azurerm_key_vault_secret" "publicclave" {
+  name         = "publicclave"
+  key_vault_id = azurerm_key_vault.kvaultmv129052023.id
+}
+
+data "azurerm_key_vault_secret" "secretclave" {
+  name         = "secretclave"
+  key_vault_id = azurerm_key_vault.kvaultmv129052023.id
+}
+
 resource "azurerm_linux_virtual_machine" "vm1" {
   name                = "vm1"
   location            = data.azurerm_resource_group.rg.location
@@ -101,20 +104,8 @@ resource "azurerm_linux_virtual_machine" "vm1" {
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = azurerm_key_vault_secret.publicclave.value
+    public_key = data.azurerm_key_vault_secret.publicclave.value
   }
-}
-
-resource "azurerm_key_vault_secret" "publicclave" {
-  name         = "publicclave"
-  value        = tls_private_key.key.public_key_openssh
-  key_vault_id = azurerm_key_vault.kvaultmv129052023.id
-}
-
-resource "azurerm_key_vault_secret" "secretclave" {
-  name         = "secretclave"
-  value        = tls_private_key.key.private_key_pem
-  key_vault_id = azurerm_key_vault.kvaultmv129052023.id
 }
 
 variable "address_space" {}
