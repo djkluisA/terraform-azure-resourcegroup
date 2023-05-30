@@ -9,6 +9,8 @@ data "azurerm_resource_group" "rg" {
   name = "1-67b62b08-playground-sandbox"
 }
 
+data "azurerm_client_config" "current" {}
+
 resource "azurerm_virtual_network" "vnet" {
   name                = "vnet1"
   location            = data.azurerm_resource_group.rg.location
