@@ -135,6 +135,8 @@ resource "azurerm_bastion_host" "vm1host" {
 }
 
 variable "address_space" {}
+
 variable "address_prefixes" {}
+
 variable "private_ip_address" {}
 
