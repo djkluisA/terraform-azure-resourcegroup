@@ -13,9 +13,9 @@ data "azurerm_resource_group" "rg" {
 
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
-  address_space       = var.address_space
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
+  address_space       = var.address_space
 }
 
 resource "azurerm_subnet" "sbnet1" {
@@ -34,8 +34,7 @@ resource "azurerm_network_interface" "nic1" {
     name                          = "ipconfig1"
     subnet_id                     = azurerm_subnet.sbnet1.id
     private_ip_address            = var.private_ip_address
-    private_ip_address_version    = "IPv4"
-    primary                       = true
+    private_ip_address_allocation = "Static"
   }
 }
 
@@ -49,8 +48,9 @@ resource "tls_private_key" "key" {
 
   lifecycle {
     ignore_changes = [
-      tls_private_key.private_key_pem,
-      tls_private_key.public_key_openssh
+      "public_key_openssh",
+      "public_key_pem",
+      "private_key_pem"
     ]
   }
 }
@@ -134,7 +134,6 @@ resource "azurerm_bastion_host" "vm1host" {
     name                          = "ipconfig1"
     public_ip_address_id          = azurerm_public_ip.pipbastion.id
     subnet_id                     = azurerm_subnet.AzureBastionSubnet.id
-    private_ip_address_version    = "IPv4"
     private_ip_address_allocation = "Dynamic"
   }
 }
