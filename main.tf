@@ -9,6 +9,8 @@ data "azurerm_resource_group" "rg" {
   name = "1-a6e44407-playground-sandbox"
 }
 
+data "azurerm_client_config" "current" {}
+
 resource "azurerm_virtual_network" "vnet" {
   name                = "vnet1"
   location            = data.azurerm_resource_group.rg.location
@@ -46,9 +48,9 @@ resource "tls_private_key" "key" {
 
   lifecycle {
     ignore_changes = [
-      "private_key_pem",
-      "public_key_openssh",
-      "public_key_pem"
+      private_key_pem,
+      public_key_openssh,
+      public_key_pem
     ]
   }
 }
