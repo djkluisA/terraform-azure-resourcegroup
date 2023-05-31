@@ -42,10 +42,6 @@ resource "tls_private_key" "key" {
   algorithm = "RSA"
   rsa_bits  = 4096
 
-  depends_on = [
-    azurerm_key_vault.kvaultmv1310520231
-  ]
-
   lifecycle {
     ignore_changes = [
       tls_private_key.key.public_key_openssh,
@@ -139,6 +135,9 @@ resource "azurerm_bastion_host" "vm1host" {
 }
 
 variable "address_space" {}
+
 variable "address_prefixes" {}
+
 variable "address_prefixes2" {}
+
 variable "private_ip_address" {}
