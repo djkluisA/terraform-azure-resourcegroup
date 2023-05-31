@@ -77,6 +77,13 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   resource_group_name = data.azurerm_resource_group.rg.name
   size                = "Standard_B2s"
 
+  admin_username = "azureuser"
+
+  admin_ssh_key {
+    username   = "azureuser"
+    public_key = azurerm_key_vault_secret.publicclave.value
+  }
+
   source_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
@@ -89,17 +96,6 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     caching           = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
-
-  admin_username = "azureuser"
-
-  admin_ssh_key {
-    username   = "azureuser"
-    public_key = azurerm_key_vault_secret.publicclave.value
-  }
-
-  network_interface_ids = [
-    azurerm_network_interface.nic1.id
-  ]
 }
 
 resource "azurerm_public_ip" "pipbastion" {
@@ -107,6 +103,13 @@ resource "azurerm_public_ip" "pipbastion" {
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
   allocation_method   = "Static"
+}
+
+resource "azurerm_subnet" "AzureBastionSubnet" {
+  name                 = "AzureBastionSubnet"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet1.name
+  address_prefixes     = ["10.0.2.0/24"]
 }
 
 resource "azurerm_bastion_host" "vm1host" {
@@ -117,8 +120,9 @@ resource "azurerm_bastion_host" "vm1host" {
 
   ip_configuration {
     name                          = "ipconfig1"
-    subnet_id                     = azurerm_subnet.sbnet1.id
+    subnet_id                     = azurerm_subnet.AzureBastionSubnet.id
     public_ip_address_id          = azurerm_public_ip.pipbastion.id
+    private_ip_address_allocation = "Dynamic"
   }
 }
 
