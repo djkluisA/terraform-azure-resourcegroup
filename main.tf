@@ -5,17 +5,17 @@ provider "azurerm" {
   features {}
 }
 
+data "azurerm_client_config" "current" {}
+
 data "azurerm_resource_group" "rg" {
   name = "1-a6e44407-playground-sandbox"
 }
 
-data "azurerm_client_config" "current" {}
-
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
+  address_space       = var.address_space
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
-  address_space       = var.address_space
 }
 
 resource "azurerm_subnet" "sbnet1" {
@@ -98,20 +98,25 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   }
 }
 
-resource "azurerm_bastion_host" "vm1host" {
-  name                = "vm1host"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
-  subnet_id           = azurerm_subnet.sbnet1.id
-  sku                 = "Standard"
-  public_ip_address_id = azurerm_public_ip_address.pipbastion.id
-}
-
-resource "azurerm_public_ip_address" "pipbastion" {
+resource "azurerm_public_ip" "pipbastion" {
   name                = "pipbastion"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
   allocation_method   = "Static"
+}
+
+resource "azurerm_bastion_host" "vm1host" {
+  name                = "vm1host"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  sku                 = "Standard"
+
+  ip_configuration {
+    name                          = "ipconfig1"
+    subnet_id                     = azurerm_subnet.sbnet1.id
+    public_ip_address_id          = azurerm_public_ip.pipbastion.id
+    private_ip_address_allocation = "Dynamic"
+  }
 }
 
 resource "azurerm_key_vault_secret" "publicclave" {
