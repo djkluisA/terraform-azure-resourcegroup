@@ -9,6 +9,8 @@ data "azurerm_resource_group" "rg" {
   name = "1-a6e44407-playground-sandbox"
 }
 
+data "azurerm_client_config" "current" {}
+
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   location            = data.azurerm_resource_group.rg.location
@@ -100,7 +102,6 @@ resource "azurerm_bastion_host" "vm1host" {
   name                = "vm1host"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
-  virtual_network_id  = azurerm_virtual_network.vnet1.id
   subnet_id           = azurerm_subnet.sbnet1.id
   sku                 = "Standard"
   public_ip_address_id = azurerm_public_ip_address.pipbastion.id
