@@ -133,3 +133,8 @@ resource "azurerm_bastion_host" "vm1host" {
     public_ip_address_id          = azurerm_public_ip.pipbastion.id
   }
 }
+
+variable "address_space" {}
+variable "address_prefixes" {}
+variable "private_ip_address" {}
+
