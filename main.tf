@@ -33,7 +33,8 @@ resource "azurerm_network_interface" "nic1" {
   ip_configuration {
     name                          = "ipconfig1"
     subnet_id                     = azurerm_subnet.sbnet1.id
-    private_ip_address_allocation = "Dynamic"
+    private_ip_address            = var.private_ip_address
+    private_ip_address_allocation = "Static"
   }
 }
 
@@ -75,14 +76,6 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
   size                = "Standard_B2s"
-  network_interface_ids = [azurerm_network_interface.nic1.id]
-
-  admin_username = "azureuser"
-
-  admin_ssh_key {
-    username   = "azureuser"
-    public_key = azurerm_key_vault_secret.publicclave.value
-  }
 
   source_image_reference {
     publisher = "Canonical"
@@ -95,6 +88,13 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     name              = "osdisk1"
     caching           = "ReadWrite"
     storage_account_type = "Standard_LRS"
+  }
+
+  admin_username = "azureuser"
+
+  admin_ssh_key {
+    username   = "azureuser"
+    public_key = azurerm_key_vault_secret.publicclave.value
   }
 }
 
@@ -109,7 +109,7 @@ resource "azurerm_subnet" "AzureBastionSubnet" {
   name                 = "AzureBastionSubnet"
   resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = ["10.0.2.0/24"]
+  address_prefixes     = ["10.0.1.0/24"]
 }
 
 resource "azurerm_bastion_host" "vm1host" {
