@@ -9,8 +9,6 @@ data "azurerm_resource_group" "rg" {
   name = "1-a6e44407-playground-sandbox"
 }
 
-data "azurerm_client_config" "current" {}
-
 resource "azurerm_virtual_network" "vnet" {
   name                = "vnet1"
   location            = data.azurerm_resource_group.rg.location
@@ -43,7 +41,7 @@ resource "tls_private_key" "key" {
   rsa_bits  = 4096
 
   depends_on = [
-    azurerm_key_vault.kvault
+    azurerm_key_vault.kv
   ]
 
   lifecycle {
@@ -55,8 +53,8 @@ resource "tls_private_key" "key" {
   }
 }
 
-resource "azurerm_key_vault" "kvault" {
-  name                = "kvaultmv129052023"
+resource "azurerm_key_vault" "kv" {
+  name                = "kvmv131052023"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
   tenant_id           = data.azurerm_client_config.current.tenant_id
@@ -84,7 +82,6 @@ resource "azurerm_linux_virtual_machine" "vm" {
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
   size                = "Standard_B2s"
-  network_interface_ids = [azurerm_network_interface.nic.id]
 
   source_image_reference {
     publisher = "Canonical"
@@ -107,16 +104,33 @@ resource "azurerm_linux_virtual_machine" "vm" {
   }
 }
 
+resource "azurerm_bastion_host" "bastion" {
+  name                = "vm1host"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  virtual_network_id  = azurerm_virtual_network.vnet.id
+  subnet_id           = azurerm_subnet.sbnet.id
+  sku                 = "Standard"
+  public_ip_address_id = azurerm_public_ip.pip.id
+}
+
+resource "azurerm_public_ip" "pip" {
+  name                = "pipbastion"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  allocation_method   = "Static"
+}
+
 resource "azurerm_key_vault_secret" "publicclave" {
   name         = "publicclave"
   value        = tls_private_key.key.public_key_openssh
-  key_vault_id = azurerm_key_vault.kvault.id
+  key_vault_id = azurerm_key_vault.kv.id
 }
 
 resource "azurerm_key_vault_secret" "secretclave" {
   name         = "secretclave"
   value        = tls_private_key.key.private_key_pem
-  key_vault_id = azurerm_key_vault.kvault.id
+  key_vault_id = azurerm_key_vault.kv.id
 }
 
 variable "address_space" {}
