@@ -96,6 +96,10 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     username   = "azureuser"
     public_key = azurerm_key_vault_secret.publicclave.value
   }
+
+  network_interface_ids = [
+    azurerm_network_interface.nic1.id
+  ]
 }
 
 resource "azurerm_public_ip" "pipbastion" {
@@ -115,7 +119,6 @@ resource "azurerm_bastion_host" "vm1host" {
     name                          = "ipconfig1"
     subnet_id                     = azurerm_subnet.sbnet1.id
     public_ip_address_id          = azurerm_public_ip.pipbastion.id
-    private_ip_address_allocation = "Dynamic"
   }
 }
 
