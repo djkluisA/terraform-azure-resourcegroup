@@ -11,41 +11,6 @@ data "azurerm_resource_group" "rg" {
   name = "1-a6e44407-playground-sandbox"
 }
 
-variable "address_space" {}
-
-variable "address_prefixes" {}
-
-variable "address_prefixes2" {}
-
-variable "private_ip_address" {}
-
-resource "azurerm_virtual_network" "vnet1" {
-  name                = "vnet1"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
-  address_space       = var.address_space
-}
-
-resource "azurerm_subnet" "sbnet1" {
-  name                 = "sbnet1"
-  resource_group_name  = data.azurerm_resource_group.rg.name
-  virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = var.address_prefixes
-}
-
-resource "azurerm_network_interface" "nic1" {
-  name                = "nic1"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
-
-  ip_configuration {
-    name                          = "ipconfig1"
-    subnet_id                     = azurerm_subnet.sbnet1.id
-    private_ip_address            = var.private_ip_address
-    private_ip_address_allocation = "Static"
-  }
-}
-
 resource "tls_private_key" "key" {
   algorithm = "RSA"
   rsa_bits  = 4096
@@ -87,6 +52,39 @@ resource "azurerm_key_vault" "kvaultmv131052023" {
   }
 }
 
+data "azurerm_subnet" "sbnet1" {
+  name                 = "sbnet1"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet1.name
+}
+
+resource "azurerm_virtual_network" "vnet1" {
+  name                = "vnet1"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  address_space       = var.address_space
+}
+
+resource "azurerm_subnet" "AzureBastionSubnet" {
+  name                 = "AzureBastionSubnet"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet1.name
+  address_prefixes     = var.address_prefixes2
+}
+
+resource "azurerm_network_interface" "nic1" {
+  name                = "nic1"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+
+  ip_configuration {
+    name                          = "ipconfig1"
+    subnet_id                     = data.azurerm_subnet.sbnet1.id
+    private_ip_address            = var.private_ip_address
+    private_ip_address_allocation = "Static"
+  }
+}
+
 resource "azurerm_linux_virtual_machine" "vm1" {
   name                = "vm1"
   location            = data.azurerm_resource_group.rg.location
@@ -124,13 +122,6 @@ resource "azurerm_public_ip" "pipbastion" {
   sku                 = "Standard"
 }
 
-resource "azurerm_subnet" "AzureBastionSubnet" {
-  name                 = "AzureBastionSubnet"
-  resource_group_name  = data.azurerm_resource_group.rg.name
-  virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = var.address_prefixes2
-}
-
 resource "azurerm_bastion_host" "vm1host" {
   name                = "vm1host"
   location            = data.azurerm_resource_group.rg.location
@@ -138,8 +129,16 @@ resource "azurerm_bastion_host" "vm1host" {
 
   ip_configuration {
     name                          = "ipconfig1"
-    subnet_id                     = azurerm_subnet.AzureBastionSubnet.id
+    subnet_id                     = data.azurerm_subnet.AzureBastionSubnet.id
     public_ip_address_id          = azurerm_public_ip.pipbastion.id
     private_ip_address_allocation = "Dynamic"
   }
 }
+
+variable "address_space" {}
+
+variable "address_prefixes" {}
+
+variable "address_prefixes2" {}
+
+variable "private_ip_address" {}
