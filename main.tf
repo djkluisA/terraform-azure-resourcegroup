@@ -96,8 +96,6 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     username   = "azureuser"
     public_key = azurerm_key_vault_secret.publicclave.value
   }
-
-  network_interface_ids = [azurerm_network_interface.nic1.id]
 }
 
 resource "azurerm_public_ip" "pipbastion" {
@@ -105,6 +103,7 @@ resource "azurerm_public_ip" "pipbastion" {
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
   allocation_method   = "Static"
+  sku                 = "Standard"
 }
 
 resource "azurerm_subnet" "AzureBastionSubnet" {
@@ -118,12 +117,12 @@ resource "azurerm_bastion_host" "vm1host" {
   name                = "vm1host"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
-  sku                 = "Standard"
 
   ip_configuration {
     name                          = "ipconfig1"
     subnet_id                     = azurerm_subnet.AzureBastionSubnet.id
     public_ip_address_id          = azurerm_public_ip.pipbastion.id
+    private_ip_address_allocation = "Dynamic"
   }
 }
 
@@ -138,11 +137,3 @@ resource "azurerm_key_vault_secret" "secretclave" {
   value        = tls_private_key.key.private_key_pem
   key_vault_id = azurerm_key_vault.kvaultmv131052023.id
 }
-
-variable "address_space" {}
-
-variable "address_prefixes" {}
-
-variable "address_prefixes2" {}
-
-variable "private_ip_address" {}
