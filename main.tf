@@ -5,7 +5,7 @@ provider "azurerm" {
 }
 
 data "azurerm_resource_group" "rg" {
-  name = "resource group1-a6e44407-playground-sandbox"
+  name = "resource-group1-a6e44407-playground-sandbox"
 }
 
 data "azurerm_client_config" "current" {}
