@@ -42,13 +42,9 @@ resource "tls_private_key" "key" {
   algorithm = "RSA"
   rsa_bits  = 4096
 
-  lifecycle {
-    ignore_changes = [
-      private_key_pem,
-      public_key_openssh,
-      public_key_pem
-    ]
-  }
+  depends_on = [
+    azurerm_key_vault.kvaultmv131052023
+  ]
 }
 
 resource "azurerm_key_vault" "kvaultmv131052023" {
@@ -100,8 +96,6 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     username   = "azureuser"
     public_key = azurerm_key_vault_secret.publicclave.value
   }
-
-  network_interface_ids = [azurerm_network_interface.nic1.id]
 }
 
 resource "azurerm_public_ip" "pipbastion" {
@@ -126,8 +120,8 @@ resource "azurerm_bastion_host" "vm1host" {
 
   ip_configuration {
     name                          = "ipconfig1"
-    public_ip_address_id          = azurerm_public_ip.pipbastion.id
     subnet_id                     = azurerm_subnet.AzureBastionSubnet.id
+    public_ip_address_id          = azurerm_public_ip.pipbastion.id
   }
 }
 
@@ -142,3 +136,11 @@ resource "azurerm_key_vault_secret" "secretclave" {
   value        = tls_private_key.key.private_key_pem
   key_vault_id = azurerm_key_vault.kvaultmv131052023.id
 }
+
+variable "address_space" {}
+
+variable "address_prefixes" {}
+
+variable "address_prefixes2" {}
+
+variable "private_ip_address" {}
