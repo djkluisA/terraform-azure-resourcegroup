@@ -53,3 +53,8 @@ resource "azurerm_network_interface" "example" {
     private_ip_address            = var.private_ip_address
   }
 }
+
+variable "address_space" {}
+variable "address_prefixes" {}
+variable "address_prefixes2" {}
+variable "private_ip_address" {}
