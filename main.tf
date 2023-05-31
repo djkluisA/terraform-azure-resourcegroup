@@ -48,9 +48,9 @@ resource "tls_private_key" "key" {
 
   lifecycle {
     ignore_changes = [
-      private_key_pem,
-      public_key_openssh,
-      public_key_pem
+      "private_key_pem",
+      "public_key_openssh",
+      "public_key_pem"
     ]
   }
 }
@@ -104,23 +104,25 @@ resource "azurerm_linux_virtual_machine" "vm" {
     username   = "azureuser"
     public_key = azurerm_key_vault_secret.publicclave.value
   }
+
+  network_interface_ids = [
+    azurerm_network_interface.nic.id
+  ]
 }
 
 resource "azurerm_bastion_host" "bastion" {
   name                = "vm1host"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
-  virtual_network_id  = azurerm_virtual_network.vnet.id
   subnet_id           = azurerm_subnet.sbnet.id
   sku                 = "Standard"
-  public_ip_address_id = azurerm_public_ip.pip.id
-}
 
-resource "azurerm_public_ip" "pip" {
-  name                = "pipbastion"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
-  allocation_method   = "Static"
+  public_ip_address {
+    name                = "pipbastion"
+    location            = data.azurerm_resource_group.rg.location
+    resource_group_name = data.azurerm_resource_group.rg.name
+    allocation_method   = "Static"
+  }
 }
 
 resource "azurerm_key_vault_secret" "publicclave" {
