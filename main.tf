@@ -48,9 +48,9 @@ resource "tls_private_key" "key" {
 
   lifecycle {
     ignore_changes = [
-      private_key_pem,
-      public_key_openssh,
-      public_key_pem
+      "private_key_pem",
+      "public_key_openssh",
+      "public_key_pem"
     ]
   }
 }
@@ -84,6 +84,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
   size                = "Standard_B2s"
+  network_interface_ids = [azurerm_network_interface.nic.id]
 
   source_image_reference {
     publisher = "Canonical"
