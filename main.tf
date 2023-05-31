@@ -11,12 +11,6 @@ data "azurerm_resource_group" "rg" {
   name = "1-a6e44407-playground-sandbox"
 }
 
-variable "address_space" {}
-
-variable "address_prefixes" {}
-
-variable "private_ip_address" {}
-
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   location            = data.azurerm_resource_group.rg.location
@@ -90,7 +84,6 @@ resource "azurerm_virtual_machine" "vm1" {
   location              = data.azurerm_resource_group.rg.location
   resource_group_name   = data.azurerm_resource_group.rg.name
   network_interface_ids = [azurerm_network_interface.nic1.id]
-  size                  = "Standard_B2s"
 
   storage_image_reference {
     publisher = "Canonical"
@@ -99,17 +92,33 @@ resource "azurerm_virtual_machine" "vm1" {
     version   = "latest"
   }
 
-  os_disk {
+  storage_os_disk {
     name              = "osdisk1"
     caching           = "ReadWrite"
-    storage_account_type = "Standard_LRS"
+    create_option     = "FromImage"
+    managed_disk_type = "Standard_LRS"
   }
 
-  admin_username = "azureuser"
+  os_profile {
+    computer_name  = "vm1"
+    admin_username = "azureuser"
 
-  admin_ssh_key {
-    username   = "azureuser"
-    public_key = tls_private_key.key.public_key_openssh
+    linux_config {
+      disable_password_authentication = true
+
+      ssh_keys {
+        path     = "/home/azureuser/.ssh/authorized_keys"
+        key_data = tls_private_key.key.public_key_openssh
+      }
+    }
+  }
+
+  os_profile_linux_config {
+    disable_password_authentication = true
+  }
+
+  hardware_profile {
+    vm_size = "Standard_B2s"
   }
 }
 
