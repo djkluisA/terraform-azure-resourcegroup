@@ -5,7 +5,7 @@ provider "azurerm" {
 }
 
 data "azurerm_resource_group" "rg" {
-  name = "resource-group1"
+  name = "resource-group1-a6e44407-playground-sandbox"
 }
 
 data "azurerm_client_config" "current" {}
@@ -44,9 +44,8 @@ resource "azurerm_network_interface_backend_address_pool_association" "nic1" {
 }
 
 resource "azurerm_lb_backend_address_pool" "pool1" {
-  name                = "pool1"
-  resource_group_name = data.azurerm_resource_group.rg.name
-  loadbalancer_id     = azurerm_lb.lb1.id
+  name            = "pool1"
+  loadbalancer_id = azurerm_lb.lb1.id
 }
 
 resource "azurerm_lb" "lb1" {
