@@ -43,20 +43,20 @@ resource "tls_private_key" "key" {
   rsa_bits  = 4096
 
   depends_on = [
-    azurerm_key_vault.kvaultmv131052023
+    azurerm_key_vault.kvaultmv1310520231
   ]
 
   lifecycle {
     ignore_changes = [
-      "private_key_pem",
       "public_key_openssh",
-      "public_key_pem"
+      "public_key_pem",
+      "private_key_pem"
     ]
   }
 }
 
-resource "azurerm_key_vault" "kvaultmv131052023" {
-  name                = "kvaultmv131052023"
+resource "azurerm_key_vault" "kvaultmv1310520231" {
+  name                = "kvaultmv1310520231"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
   tenant_id           = data.azurerm_client_config.current.tenant_id
@@ -106,7 +106,7 @@ resource "azurerm_linux_virtual_machine" "vm1" {
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = azurerm_key_vault_secret.publicclave.value
+    public_key = tls_private_key.key.public_key_openssh
   }
 }
 
@@ -130,30 +130,10 @@ resource "azurerm_bastion_host" "vm1host" {
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
   sku                 = "Standard"
-
   ip_configuration {
     name                          = "ipconfig1"
     public_ip_address_id          = azurerm_public_ip.pipbastion.id
     subnet_id                     = azurerm_subnet.AzureBastionSubnet.id
+    private_ip_address_allocation = "Dynamic"
   }
 }
-
-resource "azurerm_key_vault_secret" "publicclave" {
-  name         = "publicclave"
-  value        = tls_private_key.key.public_key_openssh
-  key_vault_id = azurerm_key_vault.kvaultmv131052023.id
-}
-
-resource "azurerm_key_vault_secret" "secretclave" {
-  name         = "secretclave"
-  value        = tls_private_key.key.private_key_pem
-  key_vault_id = azurerm_key_vault.kvaultmv131052023.id
-}
-
-variable "address_space" {}
-
-variable "address_prefixes" {}
-
-variable "address_prefixes2" {}
-
-variable "private_ip_address" {}
