@@ -13,9 +13,9 @@ data "azurerm_resource_group" "rg" {
 
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
-  address_space       = var.address_space
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
+  address_space       = var.address_space
 }
 
 resource "azurerm_subnet" "sbnet1" {
@@ -45,6 +45,14 @@ resource "tls_private_key" "key" {
   depends_on = [
     azurerm_key_vault.kvaultmv131052023
   ]
+
+  lifecycle {
+    ignore_changes = [
+      "private_key_pem",
+      "public_key_openssh",
+      "public_key_pem"
+    ]
+  }
 }
 
 resource "azurerm_key_vault" "kvaultmv131052023" {
@@ -71,13 +79,14 @@ resource "azurerm_key_vault" "kvaultmv131052023" {
   }
 }
 
-resource "azurerm_linux_virtual_machine" "vm1" {
-  name                = "vm1"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
-  size                = "Standard_B2s"
+resource "azurerm_virtual_machine" "vm1" {
+  name                  = "vm1"
+  location              = data.azurerm_resource_group.rg.location
+  resource_group_name   = data.azurerm_resource_group.rg.name
+  network_interface_ids = [azurerm_network_interface.nic1.id]
+  vm_size               = "Standard_B2s"
 
-  source_image_reference {
+  storage_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
     sku       = "18.04-LTS"
@@ -94,12 +103,8 @@ resource "azurerm_linux_virtual_machine" "vm1" {
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = azurerm_key_vault_secret.publicclave.value
+    public_key = tls_private_key.key.public_key_openssh
   }
-
-  network_interface_ids = [
-    azurerm_network_interface.nic1.id
-  ]
 }
 
 resource "azurerm_public_ip" "pipbastion" {
@@ -113,36 +118,16 @@ resource "azurerm_subnet" "AzureBastionSubnet" {
   name                 = "AzureBastionSubnet"
   resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = ["10.0.1.0/24"]
+  address_prefixes     = var.address_prefixes2
 }
 
 resource "azurerm_bastion_host" "vm1host" {
   name                = "vm1host"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
-  sku                 = "Standard"
-
   ip_configuration {
     name                          = "ipconfig1"
-    subnet_id                     = azurerm_subnet.AzureBastionSubnet.id
     public_ip_address_id          = azurerm_public_ip.pipbastion.id
+    subnet_id                     = azurerm_subnet.AzureBastionSubnet.id
   }
 }
-
-resource "azurerm_key_vault_secret" "publicclave" {
-  name         = "publicclave"
-  value        = tls_private_key.key.public_key_openssh
-  key_vault_id = azurerm_key_vault.kvaultmv131052023.id
-}
-
-resource "azurerm_key_vault_secret" "secretclave" {
-  name         = "secretclave"
-  value        = tls_private_key.key.private_key_pem
-  key_vault_id = azurerm_key_vault.kvaultmv131052023.id
-}
-
-variable "address_space" {}
-
-variable "address_prefixes" {}
-
-variable "private_ip_address" {}
