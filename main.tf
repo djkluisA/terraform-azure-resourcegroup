@@ -13,9 +13,9 @@ data "azurerm_resource_group" "rg" {
 
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
+  address_space       = var.address_space
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
-  address_space       = var.address_space
 }
 
 resource "azurerm_subnet" "sbnet1" {
@@ -48,9 +48,8 @@ resource "tls_private_key" "key" {
 
   lifecycle {
     ignore_changes = [
-      "public_key_openssh",
-      "public_key_pem",
-      "private_key_pem"
+      "private_key_pem",
+      "public_key_openssh"
     ]
   }
 }
