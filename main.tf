@@ -11,6 +11,12 @@ data "azurerm_resource_group" "rg" {
   name = "1-a6e44407-playground-sandbox"
 }
 
+variable "address_space" {}
+
+variable "address_prefixes" {}
+
+variable "private_ip_address" {}
+
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   location            = data.azurerm_resource_group.rg.location
@@ -48,9 +54,9 @@ resource "tls_private_key" "key" {
 
   lifecycle {
     ignore_changes = [
-      "public_key_openssh",
-      "public_key_pem",
-      "private_key_pem"
+      tls_private_key.key.public_key_openssh,
+      tls_private_key.key.public_key_pem,
+      tls_private_key.key.private_key_pem
     ]
   }
 }
@@ -118,7 +124,7 @@ resource "azurerm_subnet" "AzureBastionSubnet" {
   name                 = "AzureBastionSubnet"
   resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = var.address_prefixes2
+  address_prefixes     = var.address_prefixes
 }
 
 resource "azurerm_bastion_host" "vm1host" {
