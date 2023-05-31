@@ -11,6 +11,14 @@ data "azurerm_resource_group" "rg" {
   name = "1-a6e44407-playground-sandbox"
 }
 
+variable "address_space" {}
+
+variable "address_prefixes" {}
+
+variable "address_prefixes2" {}
+
+variable "private_ip_address" {}
+
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   location            = data.azurerm_resource_group.rg.location
@@ -48,9 +56,9 @@ resource "tls_private_key" "key" {
 
   lifecycle {
     ignore_changes = [
-      "private_key_pem",
-      "public_key_openssh",
-      "public_key_pem"
+      tls_private_key.key.private_key_pem,
+      tls_private_key.key.public_key_openssh,
+      tls_private_key.key.public_key_pem
     ]
   }
 }
@@ -104,6 +112,8 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     username   = "azureuser"
     public_key = tls_private_key.key.public_key_openssh
   }
+
+  network_interface_ids = [azurerm_network_interface.nic1.id]
 }
 
 resource "azurerm_public_ip" "pipbastion" {
