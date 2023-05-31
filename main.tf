@@ -48,9 +48,9 @@ resource "tls_private_key" "key" {
 
   lifecycle {
     ignore_changes = [
-      tls_private_key.key.public_key_openssh,
-      tls_private_key.key.public_key_pem,
-      tls_private_key.key.private_key_pem
+      "private_key_pem",
+      "public_key_openssh",
+      "public_key_pem"
     ]
   }
 }
@@ -79,46 +79,30 @@ resource "azurerm_key_vault" "kvaultmv131052023" {
   }
 }
 
-resource "azurerm_virtual_machine" "vm1" {
-  name                  = "vm1"
-  location              = data.azurerm_resource_group.rg.location
-  resource_group_name   = data.azurerm_resource_group.rg.name
-  network_interface_ids = [azurerm_network_interface.nic1.id]
+resource "azurerm_linux_virtual_machine" "vm1" {
+  name                = "vm1"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  size                = "Standard_B2s"
 
-  storage_image_reference {
+  source_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
     sku       = "18.04-LTS"
     version   = "latest"
   }
 
-  storage_os_disk {
+  os_disk {
     name              = "osdisk1"
     caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
+    storage_account_type = "Standard_LRS"
   }
 
-  os_profile {
-    computer_name  = "vm1"
-    admin_username = "azureuser"
+  admin_username = "azureuser"
 
-    linux_config {
-      disable_password_authentication = true
-
-      ssh_keys {
-        path     = "/home/azureuser/.ssh/authorized_keys"
-        key_data = tls_private_key.key.public_key_openssh
-      }
-    }
-  }
-
-  os_profile_linux_config {
-    disable_password_authentication = true
-  }
-
-  hardware_profile {
-    vm_size = "Standard_B2s"
+  admin_ssh_key {
+    username   = "azureuser"
+    public_key = tls_private_key.key.public_key_openssh
   }
 }
 
@@ -133,7 +117,7 @@ resource "azurerm_subnet" "AzureBastionSubnet" {
   name                 = "AzureBastionSubnet"
   resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = var.address_prefixes
+  address_prefixes     = var.address_prefixes2
 }
 
 resource "azurerm_bastion_host" "vm1host" {
@@ -144,18 +128,7 @@ resource "azurerm_bastion_host" "vm1host" {
 
   ip_configuration {
     name                          = "ipconfig1"
-    public_ip_address_id          = azurerm_public_ip.pipbastion.id
     subnet_id                     = azurerm_subnet.AzureBastionSubnet.id
+    public_ip_address_id          = azurerm_public_ip.pipbastion.id
   }
-}
-
-resource "azurerm_network_security_group" "nsg" {
-  name                = "nsg"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
-}
-
-resource "azurerm_subnet_network_security_group_association" "sbnet1_nsg" {
-  subnet_id                 = azurerm_subnet.sbnet1.id
-  network_security_group_id = azurerm_network_security_group.nsg.id
 }
