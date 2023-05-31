@@ -118,7 +118,7 @@ resource "azurerm_subnet" "AzureBastionSubnet" {
   name                 = "AzureBastionSubnet"
   resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = var.address_prefixes2
+  address_prefixes     = var.address_prefixes
 }
 
 resource "azurerm_bastion_host" "vm1host" {
