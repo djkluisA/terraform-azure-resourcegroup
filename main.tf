@@ -34,7 +34,8 @@ resource "azurerm_network_interface" "nic1" {
     name                          = "ipconfig1"
     subnet_id                     = azurerm_subnet.sbnet1.id
     private_ip_address            = var.private_ip_address
-    private_ip_address_allocation = "Static"
+    private_ip_address_version    = "IPv4"
+    primary                       = true
   }
 }
 
@@ -124,6 +125,7 @@ resource "azurerm_bastion_host" "vm1host" {
     name                          = "ipconfig1"
     subnet_id                     = azurerm_subnet.AzureBastionSubnet.id
     public_ip_address_id          = azurerm_public_ip.pipbastion.id
+    private_ip_address_version    = "IPv4"
     private_ip_address_allocation = "Dynamic"
   }
 }
