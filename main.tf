@@ -11,6 +11,14 @@ data "azurerm_resource_group" "rg" {
 
 data "azurerm_client_config" "current" {}
 
+variable "address_space" {
+  default = ["10.0.0.0/16"]
+}
+
+variable "address_prefixes" {}
+
+variable "private_ip_address" {}
+
 resource "azurerm_virtual_network" "vnet" {
   name                = "vnet1"
   location            = data.azurerm_resource_group.rg.location
@@ -117,9 +125,3 @@ resource "azurerm_key_vault_secret" "secretclave" {
   value        = tls_private_key.key.private_key_pem
   key_vault_id = azurerm_key_vault.kvault.id
 }
-
-variable "address_space" {}
-
-variable "address_prefixes" {}
-
-variable "private_ip_address" {}
