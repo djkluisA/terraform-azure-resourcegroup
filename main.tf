@@ -1,14 +1,29 @@
 
 provider "azurerm" {
-  features {}
   skip_provider_registration = true
-}
 
-data "azurerm_resource_group" "rg" {
-  name = "resource-group1-a6e44407-playground-sandbox"
+  features {}
 }
 
 data "azurerm_client_config" "current" {}
+
+data "azurerm_resource_group" "rg" {
+  name = "1-a6e44407-playground-sandbox"
+}
+
+resource "azurerm_virtual_network" "vnet1" {
+  name                = "vnet1"
+  address_space       = var.address_space
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+}
+
+resource "azurerm_subnet" "sbnet1" {
+  name                 = "sbnet1"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet1.name
+  address_prefixes     = var.address_prefixes
+}
 
 resource "azurerm_network_interface" "nic1" {
   name                = "nic1"
@@ -17,59 +32,115 @@ resource "azurerm_network_interface" "nic1" {
 
   ip_configuration {
     name                          = "ipconfig1"
-    subnet_id                     = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${data.azurerm_resource_group.rg.name}/providers/Microsoft.Network/virtualNetworks/vnet1/subnets/subnet1"
-    private_ip_address_allocation = "Static"
+    subnet_id                     = azurerm_subnet.sbnet1.id
     private_ip_address            = var.private_ip_address
+    private_ip_address_allocation = "Static"
   }
 }
 
-resource "azurerm_virtual_network" "vnet1" {
-  name                = "vnet1"
+resource "tls_private_key" "key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+
+  depends_on = [
+    azurerm_key_vault.kvaultmv131052023
+  ]
+}
+
+resource "azurerm_key_vault" "kvaultmv131052023" {
+  name                = "kvaultmv131052023"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
-  address_space       = var.address_space
-}
+  tenant_id           = data.azurerm_client_config.current.tenant_id
+  sku_name            = "standard"
 
-resource "azurerm_subnet" "subnet1" {
-  name                 = "subnet1"
-  resource_group_name  = data.azurerm_resource_group.rg.name
-  virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = var.address_prefixes
-}
+  access_policy {
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = data.azurerm_client_config.current.object_id
 
-resource "azurerm_network_interface_backend_address_pool_association" "nic1" {
-  network_interface_id    = azurerm_network_interface.nic1.id
-  ip_configuration_name   = azurerm_network_interface.nic1.ip_configuration[0].name
-  backend_address_pool_id = azurerm_lb_backend_address_pool.pool1.id
-}
-
-resource "azurerm_lb_backend_address_pool" "pool1" {
-  name            = "pool1"
-  loadbalancer_id = azurerm_lb.lb1.id
-}
-
-resource "azurerm_lb" "lb1" {
-  name                = "lb1"
-  resource_group_name = data.azurerm_resource_group.rg.name
-  location            = data.azurerm_resource_group.rg.location
-  sku                 = "Basic"
-
-  frontend_ip_configuration {
-    name                          = "PublicIPAddress"
-    public_ip_address_id          = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${data.azurerm_resource_group.rg.name}/providers/Microsoft.Network/publicIPAddresses/ip1"
-    private_ip_address_allocation = "Dynamic"
+    secret_permissions = [
+      "Get",
+      "List",
+      "Set",
+      "Delete",
+      "Recover",
+      "Backup",
+      "Restore",
+      "Purge"
+    ]
   }
 }
 
-resource "azurerm_public_ip" "ip1" {
-  name                = "ip1"
+resource "azurerm_linux_virtual_machine" "vm1" {
+  name                = "vm1"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  size                = "Standard_B2s"
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
+  }
+
+  os_disk {
+    name              = "osdisk1"
+    caching           = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+
+  admin_username = "azureuser"
+
+  admin_ssh_key {
+    username   = "azureuser"
+    public_key = azurerm_key_vault_secret.publicclave.value
+  }
+}
+
+resource "azurerm_public_ip" "pipbastion" {
+  name                = "pipbastion"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
   allocation_method   = "Static"
 }
 
+resource "azurerm_subnet" "AzureBastionSubnet" {
+  name                 = "AzureBastionSubnet"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet1.name
+  address_prefixes     = var.address_prefixes2
+}
+
+resource "azurerm_bastion_host" "vm1host" {
+  name                = "vm1host"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  sku                 = "Standard"
+
+  ip_configuration {
+    name                          = "ipconfig1"
+    public_ip_address_id          = azurerm_public_ip.pipbastion.id
+    subnet_id                     = azurerm_subnet.AzureBastionSubnet.id
+  }
+}
+
+resource "azurerm_key_vault_secret" "publicclave" {
+  name         = "publicclave"
+  value        = tls_private_key.key.public_key_openssh
+  key_vault_id = azurerm_key_vault.kvaultmv131052023.id
+}
+
+resource "azurerm_key_vault_secret" "secretclave" {
+  name         = "secretclave"
+  value        = tls_private_key.key.private_key_pem
+  key_vault_id = azurerm_key_vault.kvaultmv131052023.id
+}
+
 variable "address_space" {}
 
 variable "address_prefixes" {}
+
+variable "address_prefixes2" {}
 
 variable "private_ip_address" {}
