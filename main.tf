@@ -21,9 +21,9 @@ resource "tls_private_key" "key" {
 
   lifecycle {
     ignore_changes = [
-      tls_private_key.key.private_key_pem,
-      tls_private_key.key.public_key_openssh,
-      tls_private_key.key.public_key_pem
+      private_key_pem,
+      public_key_openssh,
+      public_key_pem
     ]
   }
 }
@@ -129,7 +129,7 @@ resource "azurerm_bastion_host" "vm1host" {
 
   ip_configuration {
     name                          = "ipconfig1"
-    subnet_id                     = data.azurerm_subnet.AzureBastionSubnet.id
+    subnet_id                     = azurerm_subnet.AzureBastionSubnet.id
     public_ip_address_id          = azurerm_public_ip.pipbastion.id
     private_ip_address_allocation = "Dynamic"
   }
