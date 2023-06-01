@@ -44,9 +44,9 @@ resource "tls_private_key" "key" {
 
   lifecycle {
     ignore_changes = [
-      private_key_pem,
-      public_key_openssh,
-      public_key_pem
+      "private_key_pem",
+      "public_key_openssh",
+      "public_key_pem"
     ]
   }
 }
@@ -146,3 +146,8 @@ resource "azurerm_key_vault_secret" "secretclave" {
   value        = tls_private_key.key.private_key_pem
   key_vault_id = azurerm_key_vault.kvaultmv1310520231.id
 }
+
+variable "address_space" {}
+variable "address_prefixes" {}
+variable "address_prefixes2" {}
+variable "private_ip_address" {}
