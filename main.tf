@@ -128,9 +128,17 @@ resource "azurerm_bastion_host" "vm1host" {
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
   sku                 = "Standard"
-  ip_configurations   = [{
+  ip_configuration   = [{
     name                          = "vm1connect"
     subnet_id                     = azurerm_subnet.AzureBastionSubnet.id
     public_ip_address_id          = azurerm_public_ip.pipbastion.id
   }]
 }
+
+variable "address_space" {}
+
+variable "address_prefixes" {}
+
+variable "address_prefixes2" {}
+
+variable "private_ip_address" {}
