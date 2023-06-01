@@ -1,1 +1,1 @@
-' para proporcionar la salida completa.
+'.
