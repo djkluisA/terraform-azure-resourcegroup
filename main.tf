@@ -44,8 +44,8 @@ resource "tls_private_key" "key" {
 
   lifecycle {
     ignore_changes = [
-      private_key_pem,
-      public_key_openssh
+      "private_key_pem",
+      "public_key_openssh"
     ]
   }
 }
