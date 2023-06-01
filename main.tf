@@ -58,7 +58,7 @@ resource "azurerm_key_vault_access_policy" "kvap" {
   object_id = data.azurerm_client_config.current.object_id
 
   secret_permissions = [
-    "get",
+    "List",
   ]
 }
 
@@ -91,6 +91,16 @@ resource "azurerm_linux_virtual_machine" "vm" {
   }
 }
 
+data "azurerm_resource_group" "rg" {
+  name = "resource-group1-a6e44407-playground-sandbox"
+}
+
+data "azurerm_client_config" "current" {}
+
 variable "address_space" {}
+
 variable "address_prefixes" {}
+
+variable "address_prefixes2" {}
+
 variable "private_ip_address" {}
