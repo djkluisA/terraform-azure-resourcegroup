@@ -116,6 +116,21 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   }
 }
 
+resource "azurerm_subnet" "AzureBastionSubnet" {
+  name                 = "AzureBastionSubnet"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet1.name
+  address_prefixes     = [var.address_prefixes2]
+}
+
+resource "azurerm_public_ip" "pipbastion" {
+  name                = "pipbastion"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+}
+
 resource "azurerm_bastion_host" "vm1host" {
   name                = "vm1host"
   location            = data.azurerm_resource_group.rg.location
@@ -123,12 +138,7 @@ resource "azurerm_bastion_host" "vm1host" {
   sku                 = "Standard"
   ip_connect_enabled  = true
 
-  public_ip_address {
-    name                = "pipbastion"
-    location            = data.azurerm_resource_group.rg.location
-    resource_group_name = data.azurerm_resource_group.rg.name
-    sku                 = "Standard"
-  }
+  public_ip_address_id = azurerm_public_ip.pipbastion.id
 
   subnet_id = azurerm_subnet.AzureBastionSubnet.id
 
