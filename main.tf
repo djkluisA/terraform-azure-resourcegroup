@@ -11,6 +11,14 @@ data "azurerm_resource_group" "rg" {
   name = "1-a6e44407-playground-sandbox"
 }
 
+variable "address_space" {}
+
+variable "address_prefixes" {}
+
+variable "address_prefixes2" {}
+
+variable "private_ip_address" {}
+
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   address_space       = var.address_space
@@ -108,13 +116,6 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   }
 }
 
-resource "azurerm_subnet" "AzureBastionSubnet" {
-  name                 = "AzureBastionSubnet"
-  resource_group_name  = data.azurerm_resource_group.rg.name
-  virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = [var.address_prefixes2]
-}
-
 resource "azurerm_public_ip" "pipbastion" {
   name                = "pipbastion"
   location            = data.azurerm_resource_group.rg.location
@@ -123,23 +124,23 @@ resource "azurerm_public_ip" "pipbastion" {
   sku                 = "Standard"
 }
 
+resource "azurerm_subnet" "AzureBastionSubnet" {
+  name                 = "AzureBastionSubnet"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet1.name
+  address_prefixes     = [var.address_prefixes2]
+}
+
 resource "azurerm_bastion_host" "vm1host" {
   name                = "vm1host"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
   sku                 = "Standard"
-  
+  ip_connect_enabled  = true
+
   ip_configuration {
     name                          = "vm1connect"
     subnet_id                     = azurerm_subnet.AzureBastionSubnet.id
     public_ip_address_id          = azurerm_public_ip.pipbastion.id
   }
 }
-
-variable "address_space" {}
-
-variable "address_prefixes" {}
-
-variable "address_prefixes2" {}
-
-variable "private_ip_address" {}
