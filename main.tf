@@ -1,6 +1,7 @@
 
 provider "azurerm" {
   features {}
+  skip_provider_registration = true
 }
 
 data "azurerm_client_config" "current" {}
@@ -8,14 +9,6 @@ data "azurerm_client_config" "current" {}
 data "azurerm_resource_group" "example" {
   name = "resource-group1-a6e44407-playground-sandbox"
 }
-
-variable "address_space" {}
-
-variable "address_prefixes" {}
-
-variable "address_prefixes2" {}
-
-variable "private_ip_address" {}
 
 resource "azurerm_virtual_network" "example" {
   name                = "example-network"
@@ -41,8 +34,17 @@ resource "azurerm_network_interface" "example" {
 
   ip_configuration {
     name                          = "example-ipconfig"
-    subnet_id                     = azurerm_virtual_network.example.subnet[0].id
+    subnet_id                     = element(azurerm_virtual_network.example.subnet.*.id, 0)
     private_ip_address_allocation = "Static"
     private_ip_address            = var.private_ip_address
   }
 }
+
+variable "address_space" {}
+
+variable "address_prefixes" {}
+
+variable "address_prefixes2" {}
+
+variable "private_ip_address" {}
+
