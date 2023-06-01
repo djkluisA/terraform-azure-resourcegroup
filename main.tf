@@ -8,14 +8,14 @@ provider "azurerm" {
 data "azurerm_client_config" "current" {}
 
 data "azurerm_resource_group" "rg" {
-  name = "1-c1502c5c-playground-sandbox"
+  name = "1-a6e44407-playground-sandbox"
 }
 
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
-  address_space       = var.address_space
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
+  address_space       = var.address_space
 }
 
 resource "azurerm_subnet" "sbnet1" {
