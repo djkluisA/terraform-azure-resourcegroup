@@ -40,6 +40,12 @@ resource "azurerm_network_interface" "example" {
   }
 }
 
+data "azurerm_subscription" "current" {}
+
+data "azurerm_resource_group" "example" {
+  name = "resource-group1-a6e44407-playground-sandbox"
+}
+
 variable "address_space" {}
 
 variable "address_prefixes" {}
