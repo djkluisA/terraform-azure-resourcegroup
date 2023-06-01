@@ -48,8 +48,8 @@ resource "tls_private_key" "key" {
 
   lifecycle {
     ignore_changes = [
-      "public_key_pem",
-      "private_key_pem"
+      tls_private_key.key.public_key_pem,
+      tls_private_key.key.private_key_pem
     ]
   }
 }
