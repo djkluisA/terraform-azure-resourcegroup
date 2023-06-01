@@ -8,7 +8,7 @@ provider "azurerm" {
 data "azurerm_client_config" "current" {}
 
 data "azurerm_resource_group" "rg" {
-  name = "1-a6e44407-playground-sandbox"
+  name = "1-c1502c5c-playground-sandbox"
 }
 
 resource "azurerm_virtual_network" "vnet1" {
