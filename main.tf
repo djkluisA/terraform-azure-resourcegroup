@@ -11,14 +11,6 @@ data "azurerm_resource_group" "rg" {
   name = "1-a6e44407-playground-sandbox"
 }
 
-variable "address_space" {}
-
-variable "address_prefixes" {}
-
-variable "address_prefixes2" {}
-
-variable "private_ip_address" {}
-
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   address_space       = var.address_space
@@ -56,8 +48,8 @@ resource "tls_private_key" "key" {
 
   lifecycle {
     ignore_changes = [
-      "private_key_pem",
-      "public_key_openssh"
+      tls_private_key.key.private_key_pem,
+      tls_private_key.key.public_key_openssh
     ]
   }
 }
