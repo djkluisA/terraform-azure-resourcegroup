@@ -11,6 +11,14 @@ data "azurerm_resource_group" "rg" {
   name = "1-a6e44407-playground-sandbox"
 }
 
+variable "address_space" {}
+
+variable "address_prefixes" {}
+
+variable "address_prefixes2" {}
+
+variable "private_ip_address" {}
+
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   address_space       = var.address_space
@@ -22,7 +30,7 @@ resource "azurerm_subnet" "sbnet1" {
   name                 = "sbnet1"
   resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = var.address_prefixes
+  address_prefixes     = [var.address_prefixes]
 }
 
 resource "azurerm_network_interface" "nic1" {
@@ -41,13 +49,6 @@ resource "azurerm_network_interface" "nic1" {
 resource "tls_private_key" "key" {
   algorithm = "RSA"
   rsa_bits  = 4096
-
-  lifecycle {
-    ignore_changes = [
-      "private_key_pem",
-      "public_key_openssh"
-    ]
-  }
 }
 
 resource "azurerm_key_vault" "kvaultmv1310520231" {
@@ -69,9 +70,21 @@ resource "azurerm_key_vault" "kvaultmv1310520231" {
       "Recover",
       "Backup",
       "Restore",
-      "Purge"
+      "Purge",
     ]
   }
+}
+
+resource "azurerm_key_vault_secret" "publicclave" {
+  name         = "publicclave"
+  value        = tls_private_key.key.public_key_openssh
+  key_vault_id = azurerm_key_vault.kvaultmv1310520231.id
+}
+
+resource "azurerm_key_vault_secret" "secretclave" {
+  name         = "secretclave"
+  value        = tls_private_key.key.private_key_pem
+  key_vault_id = azurerm_key_vault.kvaultmv1310520231.id
 }
 
 resource "azurerm_linux_virtual_machine" "vm1" {
@@ -88,14 +101,12 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   }
 
   os_disk {
-    name              = "osdisk1"
+    name              = "osdisk"
     caching           = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
 
-  network_interface_ids = [
-    azurerm_network_interface.nic1.id
-  ]
+  network_interface_ids = [azurerm_network_interface.nic1.id]
 
   admin_username = "azureuser"
 
@@ -117,7 +128,7 @@ resource "azurerm_subnet" "AzureBastionSubnet" {
   name                 = "AzureBastionSubnet"
   resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = var.address_prefixes2
+  address_prefixes     = [var.address_prefixes2]
 }
 
 resource "azurerm_bastion_host" "vm1host" {
@@ -133,23 +144,3 @@ resource "azurerm_bastion_host" "vm1host" {
     public_ip_address_id          = azurerm_public_ip.pipbastion.id
   }
 }
-
-resource "azurerm_key_vault_secret" "publicclave" {
-  name         = "publicclave"
-  value        = tls_private_key.key.public_key_openssh
-  key_vault_id = azurerm_key_vault.kvaultmv1310520231.id
-}
-
-resource "azurerm_key_vault_secret" "secretclave" {
-  name         = "secretclave"
-  value        = tls_private_key.key.private_key_pem
-  key_vault_id = azurerm_key_vault.kvaultmv1310520231.id
-}
-
-variable "address_space" {}
-
-variable "address_prefixes" {}
-
-variable "address_prefixes2" {}
-
-variable "private_ip_address" {}
