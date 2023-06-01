@@ -92,6 +92,9 @@ resource "azurerm_linux_virtual_machine" "vm" {
 }
 
 variable "address_space" {}
+
 variable "address_prefixes" {}
-variable "address_prefixes2" {}
+
 variable "private_ip_address" {}
+
+variable "address_prefixes2" {}
