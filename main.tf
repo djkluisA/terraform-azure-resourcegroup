@@ -11,6 +11,11 @@ data "azurerm_resource_group" "rg" {
 
 data "azurerm_client_config" "current" {}
 
+variable "address_space" {}
+variable "address_prefixes" {}
+variable "address_prefixes2" {}
+variable "private_ip_address" {}
+
 resource "azurerm_virtual_network" "vnet" {
   name                = "my-vnet"
   address_space       = var.address_space
@@ -58,7 +63,7 @@ resource "azurerm_key_vault_access_policy" "kvap" {
   object_id = data.azurerm_client_config.current.object_id
 
   secret_permissions = [
-    "get",
+    "Get",
   ]
 }
 
@@ -90,7 +95,3 @@ resource "azurerm_linux_virtual_machine" "vm" {
     public_key = tls_private_key.ssh.public_key_openssh
   }
 }
-
-variable "address_space" {}
-variable "address_prefixes" {}
-variable "private_ip_address" {}
