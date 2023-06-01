@@ -90,3 +90,8 @@ resource "azurerm_linux_virtual_machine" "vm" {
     public_key = tls_private_key.ssh.public_key_openssh
   }
 }
+
+variable "address_space" {}
+variable "address_prefixes" {}
+variable "address_prefixes2" {}
+variable "private_ip_address" {}
