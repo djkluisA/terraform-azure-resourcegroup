@@ -42,7 +42,7 @@ resource "azurerm_network_interface" "example" {
 
   ip_configuration {
     name                          = "example-ipconfig"
-    subnet_id                     = azurerm_virtual_network.example.subnet[0].id
+    subnet_id                     = element(azurerm_virtual_network.example.subnet.*.id, 0)
     private_ip_address_allocation = "Static"
     private_ip_address            = var.private_ip_address
   }
