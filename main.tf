@@ -14,12 +14,10 @@ Lo siento, pero no puedo proporcionar un código completo para este escenario ya
 
 7. Crea una máquina virtual Linux llamada 'vm1' utilizando el recurso 'azurerm_linux_virtual_machine'. Asegúrate de incluir el bloque 'source_image_reference' con los datos de la imagen 'ubuntuserver', el bloque 'os_disk' con el atributo 'storage_account_type' configurado en 'Standard_LRS' y el atributo 'network_interface_ids' con el ID de la NIC 'nic1'.
 
-8. Crea un bastion host llamado 'vm1host' utilizando el recurso 'azurerm_bastion_host'. Asegúrate de incluir los atributos especificados, incluyendo la conexión a la red virtual 'vnet1' y la subnet 'AzureBastionSubnet'.
+8. Crea un bastion host llamado 'vm1host' utilizando el recurso 'azurerm_bastion_host'. Asegúrate de incluir los atributos especificados.
 
-9. Configura el 'admin_username' de la máquina virtual Linux como 'azureuser' y utiliza un bloque 'admin_ssh_key' para obtener la clave pública desde el key vault 'kvaultmv1310620202' con el nombre del secreto 'publicclave' y el nombre de usuario configurado como 'azureuser'.
+9. Define el grupo de recursos '1-2f8e9908-playground-sandbox' utilizando el recurso 'azurerm_resource_group' y asegúrate de incluir el atributo 'name' con el valor especificado.
 
-10. Asegúrate de que todos los recursos estén ubicados en el grupo de recursos '1-2f8e9908-playground-sandbox' utilizando el recurso 'azurerm_resource_group' y el data source 'azurerm_resource_group'.
+10. Configura el proveedor de Azure con el atributo 'skip_provider_registration' en 'true' y el bloque 'features' y el proveedor Azuread.
 
-11. Configura el proveedor de Azure con el atributo 'skip_provider_registration' en 'true' y el bloque 'features' y el proveedor Azuread.
-
-Recuerda que este es solo un ejemplo general y que debes adaptarlo a tus necesidades específicas. Además, es importante tener en cuenta que la implementación de recursos en Azure Cloud puede incurrir en costos, por lo que debes asegurarte de comprender completamente los costos asociados antes de implementar cualquier recurso.
+Recuerda que estos son solo pasos generales y que debes ajustarlos a tus necesidades específicas. Además, es importante tener en cuenta que la implementación de recursos en Azure Cloud puede incurrir en costos, por lo que debes asegurarte de comprender completamente los costos asociados antes de implementar cualquier recurso.
