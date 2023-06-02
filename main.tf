@@ -1,11 +1,10 @@
 
 provider "azurerm" {
   skip_provider_registration = true
-
   features {}
 }
 
-data "azurerm_client_config" "current" {}
+provider "azuread" {}
 
 data "azurerm_resource_group" "rg" {
   name = "1-a6e44407-playground-sandbox"
@@ -13,9 +12,9 @@ data "azurerm_resource_group" "rg" {
 
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
-  address_space       = var.address_space
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
+  address_space       = var.address_space
 }
 
 resource "azurerm_subnet" "sbnet1" {
@@ -49,7 +48,8 @@ resource "tls_private_key" "key" {
   lifecycle {
     ignore_changes = [
       "private_key_pem",
-      "public_key_openssh"
+      "public_key_openssh",
+      "public_key_pem"
     ]
   }
 }
@@ -58,12 +58,12 @@ resource "azurerm_key_vault" "kvaultmv1310520231" {
   name                = "kvaultmv1310520231"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
-  tenant_id           = data.azurerm_client_config.current.tenant_id
+  tenant_id           = data.azuread_client_config.current.tenant_id
   sku_name            = "standard"
 
   access_policy {
-    tenant_id = data.azurerm_client_config.current.tenant_id
-    object_id = data.azurerm_client_config.current.object_id
+    tenant_id = data.azuread_client_config.current.tenant_id
+    object_id = data.azuread_user.user.object_id
 
     secret_permissions = [
       "Get",
@@ -76,6 +76,22 @@ resource "azurerm_key_vault" "kvaultmv1310520231" {
       "Purge"
     ]
   }
+
+  access_policy {
+    tenant_id = data.azuread_client_config.current.tenant_id
+    object_id = data.azuread_user.user.object_id
+
+    secret_permissions = [
+      "Get",
+      "List"
+    ]
+  }
+}
+
+data "azuread_client_config" "current" {}
+
+data "azuread_user" "user" {
+  user_principal_name = "cloud_user_p_8cf21457@realhandsonlabs.com"
 }
 
 resource "azurerm_linux_virtual_machine" "vm1" {
@@ -83,6 +99,13 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
   size                = "Standard_B2s"
+
+  admin_username = "azureuser"
+
+  admin_ssh_key {
+    username   = "azureuser"
+    public_key = azurerm_key_vault_secret.publicclave.value
+  }
 
   source_image_reference {
     publisher = "Canonical"
@@ -100,13 +123,6 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   network_interface_ids = [
     azurerm_network_interface.nic1.id
   ]
-
-  admin_username = "azureuser"
-
-  admin_ssh_key {
-    username   = "azureuser"
-    public_key = azurerm_key_vault_secret.publicclave.value
-  }
 }
 
 resource "azurerm_public_ip" "pipbastion" {
