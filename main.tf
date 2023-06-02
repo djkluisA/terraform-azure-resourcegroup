@@ -5,10 +5,6 @@
       source  = "hashicorp/azurerm"
       version = "~> 2.0"
     }
-    azuread = {
-      source  = "hashicorp/azuread"
-      version = "~> 2.0"
-    }
   }
 }
 
@@ -26,12 +22,6 @@ variable "private_ip_address" {}
 
 data "azurerm_resource_group" "example" {
   name = "1-2f8e9908-playground-sandbox"
-}
-
-data "azurerm_client_config" "current" {}
-
-data "azuread_user" "example" {
-  user_principal_name = "cloud_user_p_8cf21457@realhandsonlabs.com"
 }
 
 resource "azurerm_virtual_network" "vnet1" {
@@ -98,6 +88,12 @@ resource "azurerm_key_vault" "kvaultmv1310620202" {
       "List",
     ]
   }
+}
+
+data "azurerm_client_config" "current" {}
+
+data "azuread_user" "example" {
+  user_principal_name = "cloud_user_p_8cf21457@realhandsonlabs.com"
 }
 
 resource "azurerm_key_vault_secret" "public_key" {
