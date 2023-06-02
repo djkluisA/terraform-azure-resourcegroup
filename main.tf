@@ -16,17 +16,25 @@ data "azuread_user" "cloud_user" {
   user_principal_name = "cloud_user_p_8cf21457@realhandsonlabs.com"
 }
 
-variable "address_space" {}
+variable "address_space" {
+  type = list(string)
+}
 
-variable "address_prefixes" {}
+variable "address_prefixes" {
+  type = list(string)
+}
 
-variable "address_prefixes2" {}
+variable "address_prefixes2" {
+  type = list(string)
+}
 
-variable "private_ip_address" {}
+variable "private_ip_address" {
+  type = string
+}
 
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
-  address_space       = [var.address_space]
+  address_space       = var.address_space
   location            = data.azurerm_resource_group.sandbox.location
   resource_group_name = data.azurerm_resource_group.sandbox.name
 }
@@ -35,7 +43,7 @@ resource "azurerm_subnet" "sbnet1" {
   name                 = "sbnet1"
   resource_group_name  = data.azurerm_resource_group.sandbox.name
   virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = [var.address_prefixes]
+  address_prefixes     = var.address_prefixes
 }
 
 resource "azurerm_network_interface" "nic1" {
@@ -144,7 +152,7 @@ resource "azurerm_subnet" "AzureBastionSubnet" {
   name                 = "AzureBastionSubnet"
   resource_group_name  = data.azurerm_resource_group.sandbox.name
   virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = [var.address_prefixes2]
+  address_prefixes     = var.address_prefixes2
 }
 
 resource "azurerm_bastion_host" "vm1host" {
