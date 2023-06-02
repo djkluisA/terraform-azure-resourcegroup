@@ -102,7 +102,7 @@ resource "azurerm_key_vault" "kvaultmv1310620202" {
 
 resource "azurerm_key_vault_secret" "public_key" {
   name         = "publicclave"
-  value        = tls_private_key.example.public_key_openssh
+  value        = tls_private_key.example.public_key_pem
   key_vault_id = azurerm_key_vault.kvaultmv1310620202.id
 }
 
@@ -117,13 +117,14 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   resource_group_name = data.azurerm_resource_group.example.name
   location            = data.azurerm_resource_group.example.location
   size                = "Standard_B2s"
+  admin_username      = "azureuser"
   network_interface_ids = [
     azurerm_network_interface.nic1.id,
   ]
 
-  os_disk {
-    caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"
+  admin_ssh_key {
+    username   = "azureuser"
+    public_key = azurerm_key_vault_secret.public_key.value
   }
 
   source_image_reference {
@@ -133,12 +134,9 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     version   = "latest"
   }
 
-  computer_name  = "vm1"
-  admin_username = "azureuser"
-
-  admin_ssh_key {
-    username   = "azureuser"
-    public_key = azurerm_key_vault_secret.public_key.value
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
   }
 }
 
