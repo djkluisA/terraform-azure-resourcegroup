@@ -28,6 +28,12 @@ data "azurerm_resource_group" "example" {
   name = "1-2f8e9908-playground-sandbox"
 }
 
+data "azurerm_client_config" "current" {}
+
+data "azuread_user" "example" {
+  user_principal_name = "cloud_user_p_8cf21457@realhandsonlabs.com"
+}
+
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   address_space       = [var.address_space]
@@ -94,19 +100,13 @@ resource "azurerm_key_vault" "kvaultmv1310620202" {
   }
 }
 
-data "azurerm_client_config" "current" {}
-
-data "azuread_user" "example" {
-  user_principal_name = "cloud_user_p_8cf21457@realhandsonlabs.com"
-}
-
-resource "azurerm_key_vault_secret" "publicclave" {
+resource "azurerm_key_vault_secret" "public_key" {
   name         = "publicclave"
-  value        = tls_private_key.example.public_key_pem
+  value        = tls_private_key.example.public_key_openssh
   key_vault_id = azurerm_key_vault.kvaultmv1310620202.id
 }
 
-resource "azurerm_key_vault_secret" "secretclave" {
+resource "azurerm_key_vault_secret" "private_key" {
   name         = "secretclave"
   value        = tls_private_key.example.private_key_pem
   key_vault_id = azurerm_key_vault.kvaultmv1310620202.id
@@ -138,7 +138,7 @@ resource "azurerm_linux_virtual_machine" "vm1" {
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = azurerm_key_vault_secret.publicclave.value
+    public_key = azurerm_key_vault_secret.public_key.value
   }
 }
 
@@ -161,6 +161,8 @@ resource "azurerm_bastion_host" "vm1host" {
   name                = "vm1host"
   location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
+  subnet_id           = azurerm_subnet.AzureBastionSubnet.id
+  public_ip_address_id = azurerm_public_ip.pipbastion.id
 
   ip_configuration {
     name                 = "vm1connect"
