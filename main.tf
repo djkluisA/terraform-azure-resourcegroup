@@ -12,10 +12,6 @@ data "azurerm_resource_group" "sandbox" {
 
 data "azurerm_client_config" "current" {}
 
-data "azuread_user" "cloud_user" {
-  user_principal_name = "cloud_user_p_8cf21457@realhandsonlabs.com"
-}
-
 variable "address_space" {
   type = list(string)
 }
@@ -84,16 +80,6 @@ resource "azurerm_key_vault" "kvaultmv1310620202" {
       "Backup",
       "Restore",
       "Purge",
-    ]
-  }
-
-  access_policy {
-    tenant_id = data.azurerm_client_config.current.tenant_id
-    object_id = data.azuread_user.cloud_user.object_id
-
-    secret_permissions = [
-      "Get",
-      "List",
     ]
   }
 }
