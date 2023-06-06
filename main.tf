@@ -1,36 +1,40 @@
 
+ {
+  required_version = ">= 1.0"
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 2.0"
+    }
+    azuread = {
+      source  = "hashicorp/azuread"
+      version = "~> 2.0"
+    }
+  }
+}
+
 provider "azurerm" {
-  skip_provider_registration = true
   features {}
+  skip_provider_registration = true
 }
 
 provider "azuread" {}
+
+variable "address_space" {}
+
+variable "address_prefixes" {}
+
+variable "address_prefixes2" {}
+
+variable "private_ip_address" {}
 
 data "azurerm_resource_group" "sandbox" {
   name = "1-2f8e9908-playground-sandbox"
 }
 
-data "azurerm_client_config" "current" {}
-
-variable "address_space" {
-  type = list(string)
-}
-
-variable "address_prefixes" {
-  type = list(string)
-}
-
-variable "address_prefixes2" {
-  type = list(string)
-}
-
-variable "private_ip_address" {
-  type = string
-}
-
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
-  address_space       = var.address_space
+  address_space       = [var.address_space]
   location            = data.azurerm_resource_group.sandbox.location
   resource_group_name = data.azurerm_resource_group.sandbox.name
 }
@@ -39,7 +43,7 @@ resource "azurerm_subnet" "sbnet1" {
   name                 = "sbnet1"
   resource_group_name  = data.azurerm_resource_group.sandbox.name
   virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = var.address_prefixes
+  address_prefixes     = [var.address_prefixes]
 }
 
 resource "azurerm_network_interface" "nic1" {
@@ -48,7 +52,7 @@ resource "azurerm_network_interface" "nic1" {
   resource_group_name = data.azurerm_resource_group.sandbox.name
 
   ip_configuration {
-    name                          = "internal"
+    name                          = "ipconfig1"
     subnet_id                     = azurerm_subnet.sbnet1.id
     private_ip_address_allocation = "Static"
     private_ip_address            = var.private_ip_address
@@ -82,15 +86,29 @@ resource "azurerm_key_vault" "kvaultmv1310620202" {
       "Purge",
     ]
   }
+
+  access_policy {
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = data.azuread_user.cloud_user.object_id
+
+    secret_permissions = [
+      "Get",
+      "List",
+    ]
+  }
 }
 
-resource "azurerm_key_vault_secret" "public_key" {
+data "azuread_user" "cloud_user" {
+  user_principal_name = "cloud_user_p_8cf21457@realhandsonlabs.com"
+}
+
+resource "azurerm_key_vault_secret" "publicclave" {
   name         = "publicclave"
   value        = tls_private_key.example.public_key_pem
   key_vault_id = azurerm_key_vault.kvaultmv1310620202.id
 }
 
-resource "azurerm_key_vault_secret" "private_key" {
+resource "azurerm_key_vault_secret" "secretclave" {
   name         = "secretclave"
   value        = tls_private_key.example.private_key_pem
   key_vault_id = azurerm_key_vault.kvaultmv1310620202.id
@@ -107,8 +125,8 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   ]
 
   os_disk {
-    storage_account_type = "Standard_LRS"
     caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
   }
 
   source_image_reference {
@@ -118,11 +136,12 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     version   = "latest"
   }
 
+  computer_name  = "vm1"
   admin_username = "azureuser"
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = azurerm_key_vault_secret.public_key.value
+    public_key = azurerm_key_vault_secret.publicclave.value
   }
 }
 
@@ -138,13 +157,15 @@ resource "azurerm_subnet" "AzureBastionSubnet" {
   name                 = "AzureBastionSubnet"
   resource_group_name  = data.azurerm_resource_group.sandbox.name
   virtual_network_name = azurerm_virtual_network.vnet1.name
-  address_prefixes     = var.address_prefixes2
+  address_prefixes     = [var.address_prefixes2]
 }
 
 resource "azurerm_bastion_host" "vm1host" {
   name                = "vm1host"
   location            = data.azurerm_resource_group.sandbox.location
   resource_group_name = data.azurerm_resource_group.sandbox.name
+  subnet_id           = azurerm_subnet.AzureBastionSubnet.id
+  public_ip_address_id = azurerm_public_ip.pipbastion.id
 
   ip_configuration {
     name                 = "vm1connect"
