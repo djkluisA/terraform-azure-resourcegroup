@@ -1,4 +1,28 @@
 
+provider "azurerm" {
+  features {}
+  skip_provider_registration = true
+}
+
+data "azurerm_resource_group" "rg" {
+  name = "1-65728f5c-playground-sandbox"
+}
+
+variable "address_space" {
+  type = list(string)
+  default = ["10.0.0.0/16"]
+}
+
+variable "address_prefixes" {
+  type = list(string)
+  default = ["10.0.1.0/24"]
+}
+
+variable "private_ip_address" {
+  type = string
+  default = "10.0.1.4"
+}
+
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   address_space       = var.address_space
@@ -35,7 +59,7 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   source_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
+    sku       = "20.04-LTS"
     version   = "latest"
   }
 
@@ -54,11 +78,3 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   ]
 }
 
-data "azurerm_resource_group" "rg" {
-  name = "1-65728f5c-playground-sandbox"
-}
-
-provider "azurerm" {
-  features {}
-  skip_provider_registration = true
-}
