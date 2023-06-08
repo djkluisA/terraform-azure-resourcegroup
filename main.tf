@@ -1,4 +1,21 @@
 
+provider "azurerm" {
+  features {}
+  skip_provider_registration = true
+}
+
+variable "address_space" {
+  type = list(string)
+}
+
+variable "private_ip_address" {
+  type = string
+}
+
+data "azurerm_resource_group" "rg" {
+  name = "1-65728f5c-playground-sandbox"
+}
+
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   address_space       = var.address_space
@@ -52,13 +69,4 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   network_interface_ids = [
     azurerm_network_interface.nic1.id,
   ]
-}
-
-data "azurerm_resource_group" "rg" {
-  name = "1-65728f5c-playground-sandbox"
-}
-
-provider "azurerm" {
-  features {}
-  skip_provider_registration = true
 }
