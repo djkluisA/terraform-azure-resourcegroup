@@ -8,6 +8,8 @@ data "azurerm_resource_group" "existing" {
   name = "1-70373a8b-playground-sandbox"
 }
 
+variable "private_ip_address" {}
+
 variable "address_space" {}
 
 variable "address_prefixes" {}
