@@ -10,15 +10,7 @@ data "azurerm_resource_group" "existing" {
 
 variable "address_space" {}
 
-variable "address_prefixes" {
-  type = list(string)
-  default = ["10.0.1.0/24"]
-}
-
-variable "private_ip_address" {
-  type = string
-  default = "10.0.1.4"
-}
+variable "address_prefixes" {}
 
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
