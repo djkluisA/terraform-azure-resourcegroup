@@ -1,43 +1,35 @@
 
 provider "azurerm" {
-  features {}
   skip_provider_registration = true
+  features {}
 }
 
-variable "address_space" {
-  type = list(string)
+data "azurerm_resource_group" "existing" {
+  name = "1-891fece8-playground-sandbox"
 }
 
-variable "private_ip_address" {
-  type = string
-}
+variable "address_space" {}
 
-variable "address_prefixes" {
-  type = list(string)
-}
-
-data "azurerm_resource_group" "rg" {
-  name = "1-65728f5c-playground-sandbox"
-}
+variable "address_prefixes" {}
 
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
   address_space       = var.address_space
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.existing.location
+  resource_group_name = data.azurerm_resource_group.existing.name
 }
 
 resource "azurerm_subnet" "sbnet1" {
   name                 = "sbnet1"
-  resource_group_name  = data.azurerm_resource_group.rg.name
+  resource_group_name  = data.azurerm_resource_group.existing.name
   virtual_network_name = azurerm_virtual_network.vnet1.name
   address_prefixes     = var.address_prefixes
 }
 
 resource "azurerm_network_interface" "nic1" {
   name                = "nic1"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.existing.location
+  resource_group_name = data.azurerm_resource_group.existing.name
 
   ip_configuration {
     name                          = "ipconfig1"
@@ -49,9 +41,13 @@ resource "azurerm_network_interface" "nic1" {
 
 resource "azurerm_linux_virtual_machine" "vm1" {
   name                = "vm1"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.existing.location
+  resource_group_name = data.azurerm_resource_group.existing.name
   size                = "Standard_B2s"
+
+  network_interface_ids = [
+    azurerm_network_interface.nic1.id,
+  ]
 
   source_image_reference {
     publisher = "Canonical"
@@ -69,8 +65,4 @@ resource "azurerm_linux_virtual_machine" "vm1" {
   admin_username                = "azureuser"
   admin_password                = "Manolita3232"
   disable_password_authentication = false
-
-  network_interface_ids = [
-    azurerm_network_interface.nic1.id,
-  ]
 }
