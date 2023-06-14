@@ -104,3 +104,4 @@ data "azurerm_key_vault" "kv" {
 variable "address_space" {}
 variable "address_prefixes" {}
 variable "private_ip_address" {}
+variable "address_prefixes2" {}
