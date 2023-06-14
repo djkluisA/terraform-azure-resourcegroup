@@ -82,14 +82,7 @@ resource "azurerm_linux_virtual_machine" "example" {
     public_key = azurerm_key_vault_secret.example_public_key.value
   }
 
-  storage_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
-    version   = "latest"
-  }
-
-  os_disk {
+  storage_os_disk {
     name              = "example-osdisk"
     caching           = "ReadWrite"
     storage_account_type = "Standard_LRS"
@@ -119,7 +112,6 @@ resource "azurerm_bastion_host" "example" {
     name                          = "example-connect"
     subnet_id                     = azurerm_subnet.example.id
     public_ip_address_id          = azurerm_public_ip.example.id
-    private_ip_address_allocation = "Dynamic"
   }
 
   target_virtual_network_ids = [
