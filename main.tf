@@ -29,7 +29,7 @@ resource "azurerm_network_interface" "nic1cuatro" {
 
   ip_configuration {
     name                          = "ipconfig1"
-    subnet_id                     = azurerm_virtual_network.uno.subnet.id
+    subnet_id                     = azurerm_virtual_network.uno.subnet[0].id
     private_ip_address_allocation = "Static"
     private_ip_address            = var.private_ip_address
     public_ip_address_id          = azurerm_public_ip.pipbastioncuatro.id
@@ -77,7 +77,7 @@ resource "azurerm_bastion_host" "cuatrohost" {
   ip_configuration {
     name                          = "ipconfig1"
     public_ip_address_id          = azurerm_public_ip.pipbastioncuatro.id
-    subnet_id                     = azurerm_virtual_network.uno.subnet.id
+    subnet_id                     = azurerm_virtual_network.uno.subnet[0].id
     private_ip_address_allocation = "Dynamic"
   }
   access_policy {
