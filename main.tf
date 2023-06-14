@@ -82,11 +82,11 @@ resource "azurerm_bastion_host" "bastion" {
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
   sku                 = "Standard"
+  subnet_id           = azurerm_subnet.subnet.id
   ip_configuration {
     name      = "myipconfig"
     public_ip_address_id = azurerm_public_ip.pip.id
   }
-  subnet_id = azurerm_subnet.subnet.id
 }
 
 resource "azurerm_public_ip" "pip" {
