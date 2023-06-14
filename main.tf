@@ -82,7 +82,14 @@ resource "azurerm_linux_virtual_machine" "example" {
     public_key = azurerm_key_vault_secret.example_public_key.value
   }
 
-  storage_os_disk {
+  storage_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
+  }
+
+  os_disk {
     name              = "example-osdisk"
     caching           = "ReadWrite"
     create_option     = "FromImage"
@@ -92,17 +99,9 @@ resource "azurerm_linux_virtual_machine" "example" {
   os_profile {
     computer_name  = "example-vm"
     admin_username = "azureuser"
-  }
-
-  os_profile_linux_config {
-    disable_password_authentication = true
-  }
-
-  source_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
-    version   = "latest"
+    linux_configuration {
+      disable_password_authentication = true
+    }
   }
 }
 
@@ -116,14 +115,14 @@ resource "azurerm_bastion_host" "example" {
   name                = "example-bastion"
   location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
-  ip_connect_enabled  = true
-
-  ip_configuration {
-    name                          = "example-connect"
-    subnet_id                     = azurerm_subnet.example.id
-    public_ip_address_id          = azurerm_public_ip.example.id
-    private_ip_address_allocation = "Dynamic"
-  }
+  ip_configurations = [
+    {
+      name                          = "example-connect"
+      subnet_id                     = azurerm_subnet.example.id
+      public_ip_address_id          = azurerm_public_ip.example.id
+      private_ip_address_allocation = "Dynamic"
+    }
+  ]
 
   target_virtual_network_ids = [
     azurerm_virtual_network.example.id,
@@ -144,7 +143,3 @@ variable "address_prefixes" {}
 variable "address_prefixes2" {}
 
 variable "private_ip_address" {}
-
-locals {
-  public_key = azurerm_key_vault_secret.example_public_key.value
-}
