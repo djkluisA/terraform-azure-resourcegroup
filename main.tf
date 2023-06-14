@@ -62,6 +62,12 @@ resource "azurerm_key_vault" "doskeyvault1406" {
   }
 }
 
+resource "azurerm_key_vault_secret" "publicclave" {
+  name         = "publicclave"
+  value        = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7..."
+  key_vault_id = azurerm_key_vault.doskeyvault1406.id
+}
+
 resource "azurerm_linux_virtual_machine" "cuatro" {
   name                = "cuatro"
   location            = data.azurerm_resource_group.rg.location
