@@ -5,17 +5,17 @@ provider "azurerm" {
   features {}
 }
 
+data "azurerm_client_config" "current" {}
+
 data "azurerm_resource_group" "rg" {
   name = "1-52c8b3d4-playground-sandbox"
 }
 
-data "azurerm_client_config" "current" {}
-
 resource "azurerm_virtual_network" "uno" {
   name                = "uno"
+  address_space       = var.address_space
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
-  address_space       = var.address_space
 }
 
 resource "azurerm_subnet" "sbnet1uno" {
@@ -49,7 +49,8 @@ resource "tls_private_key" "key" {
   lifecycle {
     ignore_changes = [
       "private_key_pem",
-      "public_key_openssh"
+      "public_key_openssh",
+      "public_key_pem"
     ]
   }
 }
@@ -84,13 +85,6 @@ resource "azurerm_linux_virtual_machine" "cuatro" {
   resource_group_name = data.azurerm_resource_group.rg.name
   size                = "Standard_B2s"
 
-  admin_username = "azureuser"
-
-  admin_ssh_key {
-    username   = "azureuser"
-    public_key = azurerm_key_vault_secret.publicclave.value
-  }
-
   source_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
@@ -107,6 +101,13 @@ resource "azurerm_linux_virtual_machine" "cuatro" {
   network_interface_ids = [
     azurerm_network_interface.nic1cuatro.id
   ]
+
+  admin_username = "azureuser"
+
+  admin_ssh_key {
+    username   = "azureuser"
+    public_key = azurerm_key_vault_secret.publicclave.value
+  }
 }
 
 resource "azurerm_public_ip" "pipbastioncuatro" {
