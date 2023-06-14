@@ -12,7 +12,7 @@ data "azurerm_resource_group" "rg" {
 
 resource "azurerm_virtual_network" "vnet" {
   name                = "myvnet"
-  address_space       = ["10.0.0.0/16"]
+  address_space       = var.address_space
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
 }
@@ -21,7 +21,7 @@ resource "azurerm_subnet" "subnet" {
   name                 = "mysubnet"
   resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = ["10.0.1.0/24"]
+  address_prefixes     = var.address_prefixes
 }
 
 resource "azurerm_network_interface" "nic" {
@@ -86,7 +86,7 @@ resource "azurerm_bastion_host" "bastion" {
     name      = "myipconfig"
     public_ip_address_id = azurerm_public_ip.pip.id
   }
-  subnet_id = azurerm_subnet.bastion.id
+  subnet_id = azurerm_subnet.subnet.id
 }
 
 resource "azurerm_public_ip" "pip" {
@@ -100,3 +100,7 @@ data "azurerm_key_vault" "kv" {
   name                = "mykeyvault"
   resource_group_name = data.azurerm_resource_group.rg.name
 }
+
+variable "address_space" {}
+variable "address_prefixes" {}
+variable "private_ip_address" {}
