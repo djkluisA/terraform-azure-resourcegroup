@@ -13,7 +13,7 @@ data "azurerm_resource_group" "rg" {
 
 resource "azurerm_virtual_network" "uno" {
   name                = "uno"
-  address_space       = [var.address_space]
+  address_space       = var.address_space
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
 }
@@ -22,7 +22,7 @@ resource "azurerm_subnet" "sbnet1uno" {
   name                 = "sbnet1uno"
   resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.uno.name
-  address_prefixes     = [var.address_prefixes]
+  address_prefixes     = var.address_prefixes
 }
 
 resource "azurerm_network_interface" "nic1cuatro" {
@@ -35,20 +35,6 @@ resource "azurerm_network_interface" "nic1cuatro" {
     subnet_id                     = azurerm_subnet.sbnet1uno.id
     private_ip_address_allocation = "Static"
     private_ip_address            = var.private_ip_address
-  }
-}
-
-resource "azurerm_tls_private_key" "key" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
-
-  dynamic "secret" {
-    for_each = ["public", "private"]
-    content {
-      name      = "${secret.value}clave"
-      value     = azurerm_tls_private_key.key[secret.value]
-      key_vault_id = azurerm_key_vault.doskeyvault1406.id
-    }
   }
 }
 
@@ -129,7 +115,6 @@ variable "address_space" {}
 
 variable "address_prefixes" {}
 
-variable "address_prefixes2" {}
-
 variable "private_ip_address" {}
 
+variable "address_prefixes2" {}
