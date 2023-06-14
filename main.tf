@@ -8,6 +8,8 @@ data "azurerm_resource_group" "rg" {
   name = "1-52c8b3d4-playground-sandbox"
 }
 
+data "azurerm_client_config" "current" {}
+
 resource "azurerm_virtual_network" "uno" {
   name                = "uno"
   address_space       = var.address_space
