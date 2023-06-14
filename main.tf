@@ -1,11 +1,8 @@
 
 provider "azurerm" {
-  skip_provider_registration = true
-
   features {}
+  skip_provider_registration = true
 }
-
-data "azurerm_client_config" "current" {}
 
 data "azurerm_resource_group" "rg" {
   name = "1-52c8b3d4-playground-sandbox"
@@ -33,9 +30,14 @@ resource "azurerm_network_interface" "nic1cuatro" {
   ip_configuration {
     name                          = "ipconfig1"
     subnet_id                     = azurerm_subnet.sbnet1uno.id
-    private_ip_address_allocation = "Static"
     private_ip_address            = var.private_ip_address
+    private_ip_address_allocation = "Static"
   }
+}
+
+resource "tls_private_key" "key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
 }
 
 resource "azurerm_key_vault" "doskeyvault1406" {
@@ -64,7 +66,13 @@ resource "azurerm_key_vault" "doskeyvault1406" {
 
 resource "azurerm_key_vault_secret" "publicclave" {
   name         = "publicclave"
-  value        = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7..."
+  value        = tls_private_key.key.public_key_openssh
+  key_vault_id = azurerm_key_vault.doskeyvault1406.id
+}
+
+resource "azurerm_key_vault_secret" "secretclave" {
+  name         = "secretclave"
+  value        = tls_private_key.key.private_key_pem
   key_vault_id = azurerm_key_vault.doskeyvault1406.id
 }
 
@@ -87,26 +95,14 @@ resource "azurerm_linux_virtual_machine" "cuatro" {
     storage_account_type = "Standard_LRS"
   }
 
-  network_interface_ids = [azurerm_network_interface.nic1cuatro.id]
-
   admin_username = "azureuser"
 
   admin_ssh_key {
     username   = "azureuser"
     public_key = azurerm_key_vault_secret.publicclave.value
   }
-}
 
-resource "azurerm_bastion_host" "cuatrohost" {
-  name                = "cuatrohost"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
-  sku                 = "Standard"
-  ip_configuration {
-    name                          = "cuatroconnect"
-    subnet_id                     = azurerm_subnet.sbnet1uno.id
-    public_ip_address_id          = azurerm_public_ip.pipbastioncuatro.id
-  }
+  network_interface_ids = [azurerm_network_interface.nic1cuatro.id]
 }
 
 resource "azurerm_public_ip" "pipbastioncuatro" {
@@ -117,10 +113,23 @@ resource "azurerm_public_ip" "pipbastioncuatro" {
   sku                 = "Standard"
 }
 
-variable "address_space" {}
+resource "azurerm_subnet" "AzureBastionSubnet" {
+  name                 = "AzureBastionSubnet"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.uno.name
+  address_prefixes     = var.address_prefixes2
+}
 
-variable "address_prefixes" {}
+resource "azurerm_bastion_host" "cuatrohost" {
+  name                = "cuatrohost"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  sku                 = "Standard"
+  ip_connect_enabled  = true
 
-variable "private_ip_address" {}
-
-variable "address_prefixes2" {}
+  ip_configuration {
+    name                          = "cuatroconnect"
+    subnet_id                     = azurerm_subnet.AzureBastionSubnet.id
+    public_ip_address_id          = azurerm_public_ip.pipbastioncuatro.id
+  }
+}
