@@ -13,15 +13,16 @@ data "azurerm_client_config" "example" {}
 
 resource "azurerm_virtual_network" "example" {
   name                = "virtual-network-name"
-  address_space       = ["10.0.0.0/16"]
+  address_space       = var.address_space
   location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
 }
 
 resource "azurerm_subnet" "example" {
   name                 = "subnet-name"
-  address_prefixes     = ["10.0.1.0/24"]
+  address_prefixes     = var.address_prefixes
   virtual_network_name = azurerm_virtual_network.example.name
+  resource_group_name  = data.azurerm_resource_group.example.name
 }
 
 resource "azurerm_network_interface" "example" {
@@ -44,7 +45,7 @@ resource "azurerm_linux_virtual_machine" "example" {
   admin_username      = "adminuser"
 
   admin_ssh_key {
-    username = "adminuser"
+    username  = "adminuser"
     public_key = data.azurerm_key_vault_secret.example.value
   }
 
@@ -99,3 +100,7 @@ data "azurerm_key_vault_secret" "example" {
   key_vault_id = azurerm_key_vault.example.id
 }
 
+variable "address_space" {}
+variable "address_prefixes" {}
+variable "address_prefixes2" {}
+variable "private_ip_address" {}
