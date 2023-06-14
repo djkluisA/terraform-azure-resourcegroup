@@ -92,8 +92,7 @@ resource "azurerm_linux_virtual_machine" "example" {
   os_disk {
     name              = "example-osdisk"
     caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
+    storage_account_type = "Standard_LRS"
   }
 
   os_profile {
@@ -115,14 +114,13 @@ resource "azurerm_bastion_host" "example" {
   name                = "example-bastion"
   location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
-  ip_configurations = [
-    {
-      name                          = "example-connect"
-      subnet_id                     = azurerm_subnet.example.id
-      public_ip_address_id          = azurerm_public_ip.example.id
-      private_ip_address_allocation = "Dynamic"
-    }
-  ]
+
+  ip_configuration {
+    name                          = "example-connect"
+    subnet_id                     = azurerm_subnet.example.id
+    public_ip_address_id          = azurerm_public_ip.example.id
+    private_ip_address_allocation = "Dynamic"
+  }
 
   target_virtual_network_ids = [
     azurerm_virtual_network.example.id,
