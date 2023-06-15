@@ -51,7 +51,6 @@ resource "azurerm_key_vault" "kv" {
 
   tenant_id = data.azurerm_client_config.current.tenant_id
   enabled_for_disk_encryption = true
-  soft_delete_enabled = false
   purge_protection_enabled = true
 
   access_policy {
@@ -102,6 +101,13 @@ resource "azurerm_linux_virtual_machine" "vm" {
     }
   }
 
+  os_disk {
+    name              = "myOsDisk"
+    caching           = "ReadWrite"
+    create_option     = "FromImage"
+    managed_disk_type = "Standard_LRS"
+  }
+
   os_profile_linux_config {
     disable_password_authentication = true
   }
@@ -139,4 +145,5 @@ variable "address_space" {}
 variable "address_prefixes" {}
 variable "address_prefixes2" {}
 variable "private_ip_address" {}
+variable "admin_username" {}
 
