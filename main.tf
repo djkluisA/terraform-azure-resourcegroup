@@ -1,4 +1,4 @@
-hcl
+
 provider "azurerm" {
   skip_provider_registration = true
   features {}
@@ -7,6 +7,8 @@ provider "azurerm" {
 data "azurerm_resource_group" "example" {
   name = "1-2732064a-playground-sandbox"
 }
+
+data "azurerm_client_config" "current" {}
 
 resource "azurerm_virtual_network" "uno" {
   name                = "uno"
