@@ -55,7 +55,7 @@ resource "azurerm_key_vault" "kv" {
 
   tenant_id = data.azurerm_client_config.current.tenant_id
   enabled_for_disk_encryption = true
-  soft_delete_enabled = true
+  soft_delete_enabled = false
   purge_protection_enabled = true
 
   access_policy {
@@ -139,3 +139,8 @@ resource "azurerm_bastion_host" "bastion" {
     subnet_id = azurerm_virtual_network.vnet.subnets[0].id
   }
 }
+
+variable "address_space" {}
+variable "address_prefixes" {}
+variable "address_prefixes2" {}
+variable "private_ip_address" {}
