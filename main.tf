@@ -10,26 +10,34 @@ data "azurerm_resource_group" "example" {
 
 data "azurerm_client_config" "current" {}
 
-variable "address_space" {}
+variable "address_space" {
+  type = list(string)
+}
 
-variable "address_prefixes" {}
+variable "address_prefixes" {
+  type = list(string)
+}
 
-variable "address_prefixes2" {}
+variable "address_prefixes2" {
+  type = list(string)
+}
 
-variable "private_ip_address" {}
+variable "private_ip_address" {
+  type = string
+}
 
 resource "azurerm_virtual_network" "uno" {
   name                = "uno"
   location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
-  address_space       = [var.address_space]
+  address_space       = var.address_space
 }
 
 resource "azurerm_subnet" "sbnet1uno" {
   name                 = "sbnet1uno"
   resource_group_name  = data.azurerm_resource_group.example.name
   virtual_network_name = azurerm_virtual_network.uno.name
-  address_prefixes     = [var.address_prefixes]
+  address_prefixes     = var.address_prefixes
 }
 
 resource "azurerm_network_interface" "nic1cuatro" {
@@ -128,7 +136,7 @@ resource "azurerm_subnet" "AzureBastionSubnet" {
   name                 = "AzureBastionSubnet"
   resource_group_name  = data.azurerm_resource_group.example.name
   virtual_network_name = azurerm_virtual_network.uno.name
-  address_prefixes     = [var.address_prefixes2]
+  address_prefixes     = var.address_prefixes2
 }
 
 resource "azurerm_bastion_host" "cuatrohost" {
