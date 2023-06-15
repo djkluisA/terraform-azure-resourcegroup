@@ -55,7 +55,6 @@ resource "azurerm_key_vault" "kv" {
 
   tenant_id = data.azurerm_client_config.current.tenant_id
   enabled_for_disk_encryption = true
-  soft_delete_enabled = null
   purge_protection_enabled = true
 
   access_policy {
