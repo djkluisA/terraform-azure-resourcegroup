@@ -13,7 +13,7 @@ data "azurerm_client_config" "current" {}
 
 resource "azurerm_virtual_network" "vnet" {
   name                = "myvnet"
-  address_space       = ["10.0.0.0/16"]
+  address_space       = var.address_space
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
 }
@@ -22,7 +22,7 @@ resource "azurerm_subnet" "subnet" {
   name                 = "mysubnet"
   resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = ["10.0.1.0/24", "10.0.2.0/24"]
+  address_prefixes     = var.address_prefixes
 }
 
 resource "azurerm_network_interface" "nic" {
@@ -132,3 +132,8 @@ data "azurerm_key_vault_secret" "public_key" {
   name         = "publicclave"
   key_vault_id = azurerm_key_vault.vault.id
 }
+
+variable "address_space" {}
+variable "address_prefixes" {}
+variable "address_prefixes2" {}
+variable "private_ip_address" {}
