@@ -13,7 +13,7 @@ data "azurerm_resource_group" "rg" {
 
 resource "azurerm_virtual_network" "uno" {
   name                = "uno"
-  address_space       = ["10.0.0.0/16"]
+  address_space       = var.address_space
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
 }
@@ -22,7 +22,7 @@ resource "azurerm_subnet" "sbnet1uno" {
   name                 = "sbnet1uno"
   resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.uno.name
-  address_prefixes     = ["10.0.1.0/24"]
+  address_prefixes     = var.address_prefixes
 }
 
 resource "azurerm_network_interface" "nic1cuatro" {
@@ -121,7 +121,7 @@ resource "azurerm_subnet" "AzureBastionSubnet" {
   name                 = "AzureBastionSubnet"
   resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.uno.name
-  address_prefixes     = ["10.0.2.0/24"]
+  address_prefixes     = var.address_prefixes2
 }
 
 resource "azurerm_bastion_host" "cuatrohost" {
@@ -149,3 +149,8 @@ resource "azurerm_key_vault_secret" "secretclave" {
   value        = tls_private_key.key.private_key_pem
   key_vault_id = azurerm_key_vault.doskeyvault1406.id
 }
+
+variable "address_space" {}
+variable "address_prefixes" {}
+variable "address_prefixes2" {}
+variable "private_ip_address" {}
