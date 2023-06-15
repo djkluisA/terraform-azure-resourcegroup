@@ -9,6 +9,8 @@ data "azurerm_resource_group" "rg" {
   name = "1-32ca3100-playground-sandbox"
 }
 
+data "azurerm_client_config" "current" {}
+
 resource "azurerm_virtual_network" "uno" {
   name                = "uno"
   location            = data.azurerm_resource_group.rg.location
@@ -76,8 +78,6 @@ resource "azurerm_key_vault" "doskeyvault1406" {
   }
 }
 
-data "azurerm_client_config" "current" {}
-
 resource "azurerm_linux_virtual_machine" "cuatro" {
   name                = "cuatro"
   location            = data.azurerm_resource_group.rg.location
@@ -137,6 +137,7 @@ resource "azurerm_public_ip" "pipbastioncuatro" {
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
   sku                 = "Standard"
+  allocation_method   = "Static"
 }
 
 resource "azurerm_key_vault_secret" "publicclave" {
@@ -158,3 +159,4 @@ variable "address_prefixes" {}
 variable "address_prefixes2" {}
 
 variable "private_ip_address" {}
+
