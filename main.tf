@@ -9,6 +9,8 @@ data "azurerm_resource_group" "rg" {
   name = "1-32ca3100-playground-sandbox"
 }
 
+data "azurerm_client_config" "current" {}
+
 resource "azurerm_virtual_network" "uno" {
   name                = "uno"
   location            = data.azurerm_resource_group.rg.location
@@ -46,7 +48,6 @@ resource "tls_private_key" "key" {
 
   lifecycle {
     ignore_changes = [
-      "private_key_pem",
       "public_key_openssh"
     ]
   }
@@ -75,8 +76,6 @@ resource "azurerm_key_vault" "doskeyvault1406" {
     ]
   }
 }
-
-data "azurerm_client_config" "current" {}
 
 resource "azurerm_linux_virtual_machine" "cuatro" {
   name                = "cuatro"
@@ -123,11 +122,11 @@ resource "azurerm_bastion_host" "cuatrohost" {
     sku                 = "Standard"
   }
 
-  subnet_id = azurerm_subnet.AzureBastionSubnet.id
+  subnet_id = azurerm_subnet.sbnet1uno.id
 
   ip_configuration {
     name      = "cuatroconnect"
-    subnet_id = azurerm_subnet.AzureBastionSubnet.id
+    subnet_id = azurerm_subnet.sbnet1uno.id
     public_ip_address_id = azurerm_public_ip.pipbastioncuatro.id
   }
 }
@@ -137,6 +136,7 @@ resource "azurerm_public_ip" "pipbastioncuatro" {
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
   sku                 = "Standard"
+  allocation_method   = "Static"
 }
 
 resource "azurerm_key_vault_secret" "publicclave" {
@@ -155,6 +155,6 @@ variable "address_space" {}
 
 variable "address_prefixes" {}
 
-variable "address_prefixes2" {}
-
 variable "private_ip_address" {}
+
+variable "address_prefixes2" {}
