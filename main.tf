@@ -1,18 +1,19 @@
 
 provider "azurerm" {
-  features {}
   skip_provider_registration = true
+
+  features {}
 }
 
 data "azurerm_resource_group" "rg" {
-  name = "1-52c8b3d4-playground-sandbox"
+  name = "1-32ca3100-playground-sandbox"
 }
 
 resource "azurerm_virtual_network" "uno" {
   name                = "uno"
-  address_space       = var.address_space
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
+  address_space       = var.address_space
 }
 
 resource "azurerm_subnet" "sbnet1uno" {
@@ -42,6 +43,13 @@ resource "tls_private_key" "key" {
   depends_on = [
     azurerm_key_vault.doskeyvault1406
   ]
+
+  lifecycle {
+    ignore_changes = [
+      "private_key_pem",
+      "public_key_openssh"
+    ]
+  }
 }
 
 resource "azurerm_key_vault" "doskeyvault1406" {
