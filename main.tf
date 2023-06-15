@@ -147,3 +147,8 @@ resource "azurerm_public_ip" "example" {
   resource_group_name = data.azurerm_resource_group.example.name
   allocation_method   = "Static"
 }
+
+variable "address_space" {}
+variable "address_prefixes" {}
+variable "address_prefixes2" {}
+variable "private_ip_address" {}
