@@ -131,19 +131,10 @@ resource "azurerm_bastion_host" "cuatrohost" {
   sku                 = "Standard"
   ip_connect_enabled  = true
 
-  public_ip_address {
-    name                = "pipbastioncuatro"
-    location            = data.azurerm_resource_group.rg.location
-    resource_group_name = data.azurerm_resource_group.rg.name
-    sku                 = "Standard"
-  }
-
-  subnet_id = azurerm_subnet.AzureBastionSubnet.id
-
   ip_configuration {
     name      = "cuatroconnect"
-    subnet_id = azurerm_subnet.AzureBastionSubnet.id
     public_ip_address_id = azurerm_public_ip.pipbastioncuatro.id
+    subnet_id = azurerm_subnet.AzureBastionSubnet.id
   }
 }
 
