@@ -52,7 +52,6 @@ resource "azurerm_key_vault" "example" {
 
   tenant_id = data.azurerm_client_config.example.tenant_id
   enabled_for_disk_encryption = true
-  soft_delete_enabled = false
   purge_protection_enabled = true
 
   access_policy {
@@ -96,6 +95,12 @@ resource "azurerm_key_vault" "example" {
   }
 }
 
+resource "azurerm_key_vault_secret" "example" {
+  name         = "example-secret"
+  value        = tls_private_key.example.private_key_pem
+  key_vault_id = azurerm_key_vault.example.id
+}
+
 resource "azurerm_linux_virtual_machine" "example" {
   name                = "example-vm"
   location            = data.azurerm_resource_group.example.location
@@ -130,12 +135,15 @@ resource "azurerm_bastion_host" "example" {
   location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
   ip_configuration {
-    name      = "example-ipconfig"
-    subnet_id = azurerm_subnet.example.id
+    name            = "example-ipconfig"
+    public_ip_address_id = azurerm_public_ip.example.id
+    subnet_id       = azurerm_subnet.example.id
   }
 }
 
-variable "address_space" {}
-variable "address_prefixes" {}
-variable "address_prefixes2" {}
-variable "private_ip_address" {}
+resource "azurerm_public_ip" "example" {
+  name                = "example-public-ip"
+  location            = data.azurerm_resource_group.example.location
+  resource_group_name = data.azurerm_resource_group.example.name
+  allocation_method   = "Static"
+}
