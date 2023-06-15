@@ -10,14 +10,9 @@ data "azurerm_resource_group" "rg" {
 
 data "azurerm_client_config" "current" {}
 
-variable "address_space" {}
-variable "address_prefixes" {}
-variable "address_prefixes2" {}
-variable "private_ip_address" {}
-
 resource "azurerm_virtual_network" "vnet" {
   name                = "myvnet"
-  address_space       = var.address_space
+  address_space       = ["10.0.0.0/16"]
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
 }
@@ -26,7 +21,7 @@ resource "azurerm_subnet" "subnet" {
   name                 = "mysubnet"
   resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = [var.address_prefixes, var.address_prefixes2]
+  address_prefixes     = ["10.0.1.0/24", "10.0.2.0/24"]
 }
 
 resource "azurerm_network_interface" "nic" {
@@ -99,10 +94,10 @@ resource "azurerm_linux_virtual_machine" "vm" {
 
   os_profile {
     computer_name  = "myVM"
-    admin_username = "azureuser"
+    admin_username = var.admin_username
 
     admin_ssh_key {
-      username   = "azureuser"
+      username   = var.admin_username
       public_key = azurerm_key_vault_secret.publicclave.value
     }
   }
@@ -130,6 +125,7 @@ resource "azurerm_bastion_host" "bastion" {
 
   ip_configuration {
     name      = "myBastionConfig"
+    public_ip_address_id = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${data.azurerm_resource_group.rg.name}/providers/Microsoft.Network/publicIPAddresses/myPublicIP"
     subnet_id = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${data.azurerm_resource_group.rg.name}/providers/Microsoft.Network/virtualNetworks/${azurerm_virtual_network.vnet.name}/subnets/AzureBastionSubnet"
   }
 }
