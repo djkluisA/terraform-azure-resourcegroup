@@ -1,120 +1,94 @@
-
+hcl
 provider "azurerm" {
   skip_provider_registration = true
-
   features {}
 }
 
-data "azurerm_resource_group" "rg" {
+data "azurerm_resource_group" "example" {
   name = "1-2732064a-playground-sandbox"
 }
 
-data "azurerm_client_config" "current" {}
-
-resource "azurerm_virtual_network" "vnet" {
-  name                = "myvnet"
+resource "azurerm_virtual_network" "uno" {
+  name                = "uno"
   address_space       = var.address_space
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
-
-  subnet {
-    name           = "mysubnet"
-    address_prefix = var.address_prefixes
-  }
-
-  subnet {
-    name           = "mysubnet2"
-    address_prefix = var.address_prefixes2
-  }
+  location            = data.azurerm_resource_group.example.location
+  resource_group_name = data.azurerm_resource_group.example.name
 }
 
-resource "azurerm_network_interface" "nic" {
-  name                = "my-nic"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+resource "azurerm_subnet" "sbnet1uno" {
+  name                 = "sbnet1uno"
+  resource_group_name  = data.azurerm_resource_group.example.name
+  virtual_network_name = azurerm_virtual_network.uno.name
+  address_prefixes     = var.address_prefixes
+}
+
+resource "azurerm_network_interface" "nic1cuatro" {
+  name                = "nic1cuatro"
+  location            = data.azurerm_resource_group.example.location
+  resource_group_name = data.azurerm_resource_group.example.name
 
   ip_configuration {
-    name                          = "my-ip-config"
-    subnet_id                     = azurerm_virtual_network.vnet.subnets[0].id
+    name                          = "internal"
+    subnet_id                     = azurerm_subnet.sbnet1uno.id
     private_ip_address_allocation = "Static"
     private_ip_address            = var.private_ip_address
   }
 }
 
-resource "tls_private_key" "key" {
+resource "tls_private_key" "example" {
   algorithm = "RSA"
   rsa_bits  = 4096
 }
 
-resource "azurerm_key_vault" "kv" {
+resource "azurerm_key_vault" "doskeyvault1406" {
   name                = "doskeyvault1406"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
-
-  sku_name = "standard"
-
-  tenant_id = data.azurerm_client_config.current.tenant_id
-  enabled_for_disk_encryption = true
-  soft_delete_enabled = true
-  purge_protection_enabled = true
+  location            = data.azurerm_resource_group.example.location
+  resource_group_name = data.azurerm_resource_group.example.name
+  tenant_id           = data.azurerm_client_config.current.tenant_id
+  sku_name            = "standard"
 
   access_policy {
     tenant_id = data.azurerm_client_config.current.tenant_id
-
-    key_permissions = [
-      "create",
-      "get",
-      "list",
-      "delete",
-      "backup",
-      "restore"
-    ]
+    object_id = data.azurerm_client_config.current.object_id
 
     secret_permissions = [
-      "get",
-      "list",
-      "set",
-      "delete",
-      "backup",
-      "restore"
+      "Get",
+      "List",
+      "Set",
+      "Delete",
+      "Recover",
+      "Backup",
+      "Restore",
+      "Purge",
     ]
-
-    certificate_permissions = [
-      "get",
-      "list",
-      "delete",
-      "create",
-      "import",
-      "update",
-      "managecontacts",
-      "getissuers",
-      "listissuers",
-      "setissuers",
-      "deleteissuers",
-      "manageissuers",
-      "recover"
-    ]
-
-    object_id = data.azurerm_client_config.current.object_id
   }
 }
 
-resource "azurerm_linux_virtual_machine" "vm" {
-  name                = "my-vm"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+resource "azurerm_key_vault_secret" "publicclave" {
+  name         = "publicclave"
+  value        = tls_private_key.example.public_key_pem
+  key_vault_id = azurerm_key_vault.doskeyvault1406.id
+}
+
+resource "azurerm_key_vault_secret" "secretclave" {
+  name         = "secretclave"
+  value        = tls_private_key.example.private_key_pem
+  key_vault_id = azurerm_key_vault.doskeyvault1406.id
+}
+
+resource "azurerm_linux_virtual_machine" "cuatro" {
+  name                = "cuatro"
+  resource_group_name = data.azurerm_resource_group.example.name
+  location            = data.azurerm_resource_group.example.location
   size                = "Standard_B2s"
   admin_username      = "azureuser"
+  network_interface_ids = [
+    azurerm_network_interface.nic1cuatro.id,
+  ]
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = azurerm_key_vault_secret.public_key.value
-  }
-
-  os_disk {
-    name              = "my-os-disk"
-    caching           = "ReadWrite"
-    storage_account_type = "Standard_LRS"
+    public_key = azurerm_key_vault_secret.publicclave.value
   }
 
   source_image_reference {
@@ -124,18 +98,52 @@ resource "azurerm_linux_virtual_machine" "vm" {
     version   = "latest"
   }
 
-  network_interface_ids = [
-    azurerm_network_interface.nic.id
-  ]
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
 }
 
-resource "azurerm_bastion_host" "bastion" {
-  name                = "my-bastion"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
+resource "azurerm_public_ip" "pipbastioncuatro" {
+  name                = "pipbastioncuatro"
+  location            = data.azurerm_resource_group.example.location
+  resource_group_name = data.azurerm_resource_group.example.name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+}
+
+resource "azurerm_subnet" "AzureBastionSubnet" {
+  name                 = "AzureBastionSubnet"
+  resource_group_name  = data.azurerm_resource_group.example.name
+  virtual_network_name = azurerm_virtual_network.uno.name
+  address_prefixes     = var.address_prefixes2
+}
+
+resource "azurerm_bastion_host" "cuatrohost" {
+  name                = "cuatrohost"
+  location            = data.azurerm_resource_group.example.location
+  resource_group_name = data.azurerm_resource_group.example.name
+  subnet_id           = azurerm_subnet.AzureBastionSubnet.id
 
   ip_configuration {
-    name      = "my-ip-config"
-    subnet_id = azurerm_virtual_network.vnet.subnets[0].id
+    name                 = "cuatroconnect"
+    subnet_id            = azurerm_subnet.AzureBastionSubnet.id
+    public_ip_address_id = azurerm_public_ip.pipbastioncuatro.id
   }
+}
+
+variable "address_space" {
+  type = list(string)
+}
+
+variable "address_prefixes" {
+  type = list(string)
+}
+
+variable "address_prefixes2" {
+  type = list(string)
+}
+
+variable "private_ip_address" {
+  type = string
 }
