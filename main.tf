@@ -42,14 +42,10 @@ resource "tls_private_key" "key" {
   algorithm = "RSA"
   rsa_bits  = 4096
 
-  depends_on = [
-    azurerm_key_vault.doskeyvault1406
-  ]
-
   lifecycle {
     ignore_changes = [
-      tls_private_key.key.private_key_pem,
-      tls_private_key.key.public_key_openssh
+      private_key_pem,
+      public_key_openssh
     ]
   }
 }
@@ -151,6 +147,9 @@ resource "azurerm_key_vault_secret" "secretclave" {
 }
 
 variable "address_space" {}
+
 variable "address_prefixes" {}
+
 variable "address_prefixes2" {}
+
 variable "private_ip_address" {}
