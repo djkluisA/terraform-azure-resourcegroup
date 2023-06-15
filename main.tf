@@ -100,15 +100,15 @@ resource "azurerm_virtual_machine" "vm" {
   os_profile {
     computer_name  = "myvm"
     admin_username = "azureuser"
-
-    admin_ssh_key {
-      username   = "azureuser"
-      public_key = azurerm_key_vault_secret.secret.value
-    }
   }
 
   os_profile_linux_config {
     disable_password_authentication = true
+
+    ssh_keys {
+      path     = "/home/azureuser/.ssh/authorized_keys"
+      key_data = azurerm_key_vault_secret.secret.value
+    }
   }
 
   hardware_profile {
@@ -130,5 +130,5 @@ resource "azurerm_bastion_host" "bastion" {
 
 variable "address_space" {}
 variable "address_prefixes" {}
-variable "address_prefixes2" {}
 variable "private_ip_address" {}
+variable "address_prefixes2" {}
