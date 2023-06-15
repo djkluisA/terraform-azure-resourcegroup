@@ -97,6 +97,7 @@ resource "azurerm_linux_virtual_machine" "cuatro" {
   ]
 
   os_disk {
+    caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
 
@@ -134,12 +135,11 @@ resource "azurerm_bastion_host" "cuatrohost" {
   name                = "cuatrohost"
   location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
-  subnet_id           = azurerm_subnet.AzureBastionSubnet.id
 
   ip_configuration {
     name                 = "cuatroconnect"
-    subnet_id            = azurerm_subnet.AzureBastionSubnet.id
     public_ip_address_id = azurerm_public_ip.pipbastioncuatro.id
+    subnet_id            = azurerm_subnet.AzureBastionSubnet.id
   }
 
   sku = "Standard"
