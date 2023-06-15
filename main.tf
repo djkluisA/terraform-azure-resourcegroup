@@ -35,7 +35,7 @@ resource "azurerm_network_interface" "nic" {
 
   ip_configuration {
     name                          = "my-ip-config"
-    subnet_id                     = azurerm_virtual_network.vnet.subnets[0].id
+    subnet_id                     = azurerm_virtual_network.vnet.subnet[0].id
     private_ip_address_allocation = "Static"
     private_ip_address            = var.private_ip_address
   }
@@ -55,7 +55,7 @@ resource "azurerm_key_vault" "kv" {
 
   tenant_id = data.azurerm_client_config.current.tenant_id
   enabled_for_disk_encryption = true
-  soft_delete_enabled = false
+  soft_delete_enabled = null
   purge_protection_enabled = true
 
   access_policy {
@@ -136,7 +136,7 @@ resource "azurerm_bastion_host" "bastion" {
 
   ip_configuration {
     name      = "my-ip-config"
-    subnet_id = azurerm_virtual_network.vnet.subnets[0].id
+    subnet_id = azurerm_virtual_network.vnet.subnet[0].id
   }
 }
 
