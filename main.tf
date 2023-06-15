@@ -48,8 +48,8 @@ resource "tls_private_key" "key" {
 
   lifecycle {
     ignore_changes = [
-      "private_key_pem",
-      "public_key_openssh"
+      tls_private_key.key.private_key_pem,
+      tls_private_key.key.public_key_openssh
     ]
   }
 }
@@ -109,6 +109,21 @@ resource "azurerm_linux_virtual_machine" "cuatro" {
   }
 }
 
+resource "azurerm_subnet" "AzureBastionSubnet" {
+  name                 = "AzureBastionSubnet"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.uno.name
+  address_prefixes     = var.address_prefixes2
+}
+
+resource "azurerm_public_ip" "pipbastioncuatro" {
+  name                = "pipbastioncuatro"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  sku                 = "Standard"
+  allocation_method   = "Static"
+}
+
 resource "azurerm_bastion_host" "cuatrohost" {
   name                = "cuatrohost"
   location            = data.azurerm_resource_group.rg.location
@@ -132,14 +147,6 @@ resource "azurerm_bastion_host" "cuatrohost" {
   }
 }
 
-resource "azurerm_public_ip" "pipbastioncuatro" {
-  name                = "pipbastioncuatro"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
-  sku                 = "Standard"
-  allocation_method   = "Static"
-}
-
 resource "azurerm_key_vault_secret" "publicclave" {
   name         = "publicclave"
   value        = tls_private_key.key.public_key_openssh
@@ -159,4 +166,3 @@ variable "address_prefixes" {}
 variable "address_prefixes2" {}
 
 variable "private_ip_address" {}
-
