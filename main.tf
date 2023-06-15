@@ -84,6 +84,8 @@ resource "azurerm_virtual_machine" "vm" {
   resource_group_name   = data.azurerm_resource_group.rg.name
   network_interface_ids = [azurerm_network_interface.nic.id]
 
+  vm_size = "Standard_B1ls"
+
   storage_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
@@ -101,14 +103,14 @@ resource "azurerm_virtual_machine" "vm" {
     computer_name  = "myVM"
     admin_username = "azureuser"
 
-    admin_ssh_key {
-      username   = "azureuser"
-      public_key = azurerm_key_vault_secret.public_key.value
-    }
-  }
+    linux_configuration {
+      disable_password_authentication = true
 
-  os_profile_linux_config {
-    disable_password_authentication = true
+      ssh {
+        public_key = azurerm_key_vault_secret.public_key.value
+        key_data   = tls_private_key.key.public_key_openssh
+      }
+    }
   }
 
   tags = {
@@ -135,5 +137,4 @@ data "azurerm_key_vault_secret" "public_key" {
 
 variable "address_space" {}
 variable "address_prefixes" {}
-variable "address_prefixes2" {}
 variable "private_ip_address" {}
