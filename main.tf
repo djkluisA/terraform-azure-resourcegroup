@@ -1,4 +1,13 @@
-hcl
+
+ {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 2.0"
+    }
+  }
+}
+
 provider "azurerm" {
   skip_provider_registration = true
   features {}
@@ -10,13 +19,21 @@ data "azurerm_resource_group" "example" {
 
 data "azurerm_client_config" "current" {}
 
-variable "address_space" {}
+variable "address_space" {
+  type = string
+}
 
-variable "address_prefixes" {}
+variable "address_prefixes" {
+  type = string
+}
 
-variable "address_prefixes2" {}
+variable "address_prefixes2" {
+  type = string
+}
 
-variable "private_ip_address" {}
+variable "private_ip_address" {
+  type = string
+}
 
 resource "azurerm_virtual_network" "uno" {
   name                = "uno"
