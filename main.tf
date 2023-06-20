@@ -62,7 +62,14 @@ resource "azurerm_key_vault" "doskeyvault1406" {
     object_id = data.azurerm_client_config.current.object_id
 
     secret_permissions = [
-      "Get", "List", "Set", "Delete", "Recover", "Backup", "Restore", "Purge"
+      "Get",
+      "List",
+      "Set",
+      "Delete",
+      "Recover",
+      "Backup",
+      "Restore",
+      "Purge",
     ]
   }
 }
@@ -86,7 +93,7 @@ resource "azurerm_linux_virtual_machine" "vmiagen" {
   size                = "Standard_B2s"
 
   network_interface_ids = [
-    azurerm_network_interface.nic1vmiagen.id
+    azurerm_network_interface.nic1vmiagen.id,
   ]
 
   os_disk {
