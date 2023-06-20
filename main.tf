@@ -1,4 +1,4 @@
-hcl
+
  {
   required_providers {
     azurerm = {
@@ -24,6 +24,8 @@ variable "private_ip_address" {}
 data "azurerm_resource_group" "example" {
   name = "1-a285aa65-playground-sandbox"
 }
+
+data "azurerm_client_config" "current" {}
 
 resource "azurerm_virtual_network" "uno" {
   name                = "uno"
