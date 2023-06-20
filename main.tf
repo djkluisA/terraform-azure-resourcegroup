@@ -1,14 +1,17 @@
 hcl
+ {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 2.0"
+    }
+  }
+}
+
 provider "azurerm" {
   skip_provider_registration = true
   features {}
 }
-
-data "azurerm_resource_group" "example" {
-  name = "1-a285aa65-playground-sandbox"
-}
-
-data "azurerm_client_config" "current" {}
 
 variable "address_space" {}
 
@@ -17,6 +20,10 @@ variable "address_prefixes" {}
 variable "address_prefixes2" {}
 
 variable "private_ip_address" {}
+
+data "azurerm_resource_group" "example" {
+  name = "1-a285aa65-playground-sandbox"
+}
 
 resource "azurerm_virtual_network" "uno" {
   name                = "uno"
@@ -141,13 +148,5 @@ resource "azurerm_bastion_host" "vmiagenhost" {
     name                 = "vmiagenconnect"
     subnet_id            = azurerm_subnet.AzureBastionSubnet.id
     public_ip_address_id = azurerm_public_ip.pipbastionvmiagen.id
-  }
-
-  sku {
-    name = "Standard"
-  }
-
-  tags = {
-    ip_connect_enabled = "true"
   }
 }
