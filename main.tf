@@ -135,7 +135,6 @@ resource "azurerm_bastion_host" "vmiagenhost" {
   location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
   subnet_id           = azurerm_subnet.AzureBastionSubnet.id
-  public_ip_address_id = azurerm_public_ip.pipbastionvmiagen.id
 
   ip_configuration {
     name                 = "vmiagenconnect"
