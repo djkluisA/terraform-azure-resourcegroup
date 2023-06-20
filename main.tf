@@ -1,13 +1,4 @@
-
- {
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 2.0"
-    }
-  }
-}
-
+hcl
 provider "azurerm" {
   skip_provider_registration = true
   features {}
@@ -29,9 +20,9 @@ variable "private_ip_address" {}
 
 resource "azurerm_virtual_network" "uno" {
   name                = "uno"
+  address_space       = [var.address_space]
   location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
-  address_space       = [var.address_space]
 }
 
 resource "azurerm_subnet" "sbnet1uno" {
@@ -41,13 +32,13 @@ resource "azurerm_subnet" "sbnet1uno" {
   address_prefixes     = [var.address_prefixes]
 }
 
-resource "azurerm_network_interface" "nic1vmiagen" {
-  name                = "nic1vmiagen"
+resource "azurerm_network_interface" "nic1tres" {
+  name                = "nic1tres"
   location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
 
   ip_configuration {
-    name                          = "internal"
+    name                          = "ipconfig1"
     subnet_id                     = azurerm_subnet.sbnet1uno.id
     private_ip_address_allocation = "Static"
     private_ip_address            = var.private_ip_address
@@ -95,14 +86,14 @@ resource "azurerm_key_vault_secret" "secretclave" {
   key_vault_id = azurerm_key_vault.doskeyvault1406.id
 }
 
-resource "azurerm_linux_virtual_machine" "vmiagen" {
-  name                = "vmiagen"
+resource "azurerm_linux_virtual_machine" "tres" {
+  name                = "tres"
   location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
   size                = "Standard_B2s"
 
   network_interface_ids = [
-    azurerm_network_interface.nic1vmiagen.id,
+    azurerm_network_interface.nic1tres.id,
   ]
 
   os_disk {
@@ -124,8 +115,8 @@ resource "azurerm_linux_virtual_machine" "vmiagen" {
   }
 }
 
-resource "azurerm_public_ip" "pipbastionvmiagen" {
-  name                = "pipbastionvmiagen"
+resource "azurerm_public_ip" "pipbastiontres" {
+  name                = "pipbastiontres"
   location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
   allocation_method   = "Static"
@@ -139,16 +130,18 @@ resource "azurerm_subnet" "AzureBastionSubnet" {
   address_prefixes     = [var.address_prefixes2]
 }
 
-resource "azurerm_bastion_host" "vmiagenhost" {
-  name                = "vmiagenhost"
+resource "azurerm_bastion_host" "treshost" {
+  name                = "treshost"
   location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
   subnet_id           = azurerm_subnet.AzureBastionSubnet.id
-  public_ip_address_id = azurerm_public_ip.pipbastionvmiagen.id
+  public_ip_address_id = azurerm_public_ip.pipbastiontres.id
 
   ip_configuration {
-    name                 = "vmiagenconnect"
+    name                 = "tresconnect"
     subnet_id            = azurerm_subnet.AzureBastionSubnet.id
-    public_ip_address_id = azurerm_public_ip.pipbastionvmiagen.id
+    public_ip_address_id = azurerm_public_ip.pipbastiontres.id
   }
+
+  sku_name = "Standard"
 }
