@@ -1,17 +1,14 @@
-
- {
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 2.0"
-    }
-  }
-}
-
+hcl
 provider "azurerm" {
   skip_provider_registration = true
   features {}
 }
+
+data "azurerm_resource_group" "example" {
+  name = "1-a285aa65-playground-sandbox"
+}
+
+data "azurerm_client_config" "current" {}
 
 variable "address_space" {}
 
@@ -21,17 +18,11 @@ variable "address_prefixes2" {}
 
 variable "private_ip_address" {}
 
-data "azurerm_resource_group" "example" {
-  name = "1-a285aa65-playground-sandbox"
-}
-
-data "azurerm_client_config" "current" {}
-
 resource "azurerm_virtual_network" "uno" {
   name                = "uno"
-  address_space       = [var.address_space]
   location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
+  address_space       = [var.address_space]
 }
 
 resource "azurerm_subnet" "sbnet1uno" {
@@ -71,14 +62,7 @@ resource "azurerm_key_vault" "doskeyvault1406" {
     object_id = data.azurerm_client_config.current.object_id
 
     secret_permissions = [
-      "Get",
-      "List",
-      "Set",
-      "Delete",
-      "Recover",
-      "Backup",
-      "Restore",
-      "Purge",
+      "Get", "List", "Set", "Delete", "Recover", "Backup", "Restore", "Purge"
     ]
   }
 }
@@ -102,7 +86,7 @@ resource "azurerm_linux_virtual_machine" "vmiagen" {
   size                = "Standard_B2s"
 
   network_interface_ids = [
-    azurerm_network_interface.nic1vmiagen.id,
+    azurerm_network_interface.nic1vmiagen.id
   ]
 
   os_disk {
