@@ -1,31 +1,39 @@
-
+hcl
 provider "azurerm" {
   skip_provider_registration = true
   features {}
 }
 
 data "azurerm_resource_group" "example" {
-  name = "1-2732064a-playground-sandbox"
+  name = "1-a285aa65-playground-sandbox"
 }
 
 data "azurerm_client_config" "current" {}
 
+variable "address_space" {}
+
+variable "address_prefixes" {}
+
+variable "address_prefixes2" {}
+
+variable "private_ip_address" {}
+
 resource "azurerm_virtual_network" "uno" {
   name                = "uno"
-  address_space       = var.address_space
   location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
+  address_space       = [var.address_space]
 }
 
 resource "azurerm_subnet" "sbnet1uno" {
   name                 = "sbnet1uno"
   resource_group_name  = data.azurerm_resource_group.example.name
   virtual_network_name = azurerm_virtual_network.uno.name
-  address_prefixes     = var.address_prefixes
+  address_prefixes     = [var.address_prefixes]
 }
 
-resource "azurerm_network_interface" "nic1cuatro" {
-  name                = "nic1cuatro"
+resource "azurerm_network_interface" "nic1vmiagen" {
+  name                = "nic1vmiagen"
   location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
 
@@ -78,19 +86,18 @@ resource "azurerm_key_vault_secret" "secretclave" {
   key_vault_id = azurerm_key_vault.doskeyvault1406.id
 }
 
-resource "azurerm_linux_virtual_machine" "cuatro" {
-  name                = "cuatro"
-  resource_group_name = data.azurerm_resource_group.example.name
+resource "azurerm_linux_virtual_machine" "vmiagen" {
+  name                = "vmiagen"
   location            = data.azurerm_resource_group.example.location
+  resource_group_name = data.azurerm_resource_group.example.name
   size                = "Standard_B2s"
-  admin_username      = "azureuser"
+
   network_interface_ids = [
-    azurerm_network_interface.nic1cuatro.id,
+    azurerm_network_interface.nic1vmiagen.id,
   ]
 
-  admin_ssh_key {
-    username   = "azureuser"
-    public_key = azurerm_key_vault_secret.publicclave.value
+  os_disk {
+    storage_account_type = "Standard_LRS"
   }
 
   source_image_reference {
@@ -100,16 +107,39 @@ resource "azurerm_linux_virtual_machine" "cuatro" {
     version   = "latest"
   }
 
-  os_disk {
-    caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"
+  admin_username = "azureuser"
+
+  admin_ssh_key {
+    username   = "azureuser"
+    public_key = azurerm_key_vault_secret.publicclave.value
   }
 }
 
-variable "address_space" {}
+resource "azurerm_public_ip" "pipbastionvmiagen" {
+  name                = "pipbastionvmiagen"
+  location            = data.azurerm_resource_group.example.location
+  resource_group_name = data.azurerm_resource_group.example.name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+}
 
-variable "address_prefixes" {}
+resource "azurerm_subnet" "AzureBastionSubnet" {
+  name                 = "AzureBastionSubnet"
+  resource_group_name  = data.azurerm_resource_group.example.name
+  virtual_network_name = azurerm_virtual_network.uno.name
+  address_prefixes     = [var.address_prefixes2]
+}
 
-variable "address_prefixes2" {}
+resource "azurerm_bastion_host" "vmiagenhost" {
+  name                = "vmiagenhost"
+  location            = data.azurerm_resource_group.example.location
+  resource_group_name = data.azurerm_resource_group.example.name
+  subnet_id           = azurerm_subnet.AzureBastionSubnet.id
+  public_ip_address_id = azurerm_public_ip.pipbastionvmiagen.id
 
-variable "private_ip_address" {}
+  ip_configuration {
+    name                 = "vmiagenconnect"
+    subnet_id            = azurerm_subnet.AzureBastionSubnet.id
+    public_ip_address_id = azurerm_public_ip.pipbastionvmiagen.id
+  }
+}
