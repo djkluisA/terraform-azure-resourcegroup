@@ -9,9 +9,11 @@ data "azurerm_resource_group" "example" {
   name = "1-add4c5fe-playground-sandbox"
 }
 
+data "azurerm_client_config" "current" {}
+
 resource "azurerm_virtual_network" "example" {
   name                = "vnetopenai"
-  address_space       = [var.address_space]
+  address_space       = var.address_space
   location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
 }
@@ -20,7 +22,7 @@ resource "azurerm_subnet" "example" {
   name                 = "sbnet1vnetopenai"
   resource_group_name  = data.azurerm_resource_group.example.name
   virtual_network_name = azurerm_virtual_network.example.name
-  address_prefixes     = [var.address_prefixes]
+  address_prefixes     = var.address_prefixes
 }
 
 resource "azurerm_network_interface" "example" {
@@ -112,7 +114,7 @@ resource "azurerm_subnet" "example_bastion" {
   name                 = "AzureBastionSubnet"
   resource_group_name  = data.azurerm_resource_group.example.name
   virtual_network_name = azurerm_virtual_network.example.name
-  address_prefixes     = [var.address_prefixes2]
+  address_prefixes     = var.address_prefixes2
 }
 
 resource "azurerm_bastion_host" "example" {
