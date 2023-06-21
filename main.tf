@@ -22,6 +22,8 @@ data "azurerm_resource_group" "example" {
   name = "1-add4c5fe-playground-sandbox"
 }
 
+data "azurerm_client_config" "current" {}
+
 resource "azurerm_virtual_network" "vnetopenai" {
   name                = "vnetopenai"
   address_space       = [var.address_space]
