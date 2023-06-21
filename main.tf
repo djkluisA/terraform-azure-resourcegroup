@@ -1,62 +1,51 @@
-hcl
- {
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 2.0"
-    }
-  }
-}
 
 provider "azurerm" {
   skip_provider_registration = true
+
   features {}
 }
-
-variable "address_space" {}
-variable "address_prefixes" {}
-variable "address_prefixes2" {}
-variable "private_ip_address" {}
 
 data "azurerm_resource_group" "example" {
   name = "1-add4c5fe-playground-sandbox"
 }
 
-data "azurerm_client_config" "current" {}
-
-resource "azurerm_virtual_network" "vnetopenai" {
+resource "azurerm_virtual_network" "example" {
   name                = "vnetopenai"
   address_space       = [var.address_space]
   location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
 }
 
-resource "azurerm_subnet" "sbnet1vnetopenai" {
+resource "azurerm_subnet" "example" {
   name                 = "sbnet1vnetopenai"
   resource_group_name  = data.azurerm_resource_group.example.name
-  virtual_network_name = azurerm_virtual_network.vnetopenai.name
+  virtual_network_name = azurerm_virtual_network.example.name
   address_prefixes     = [var.address_prefixes]
 }
 
-resource "azurerm_network_interface" "nic1vmopenai" {
+resource "azurerm_network_interface" "example" {
   name                = "nic1vmopenai"
   location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
 
   ip_configuration {
-    name                          = "internal"
-    subnet_id                     = azurerm_subnet.sbnet1vnetopenai.id
-    private_ip_address_allocation = "Static"
+    name                          = "ipconfig1"
+    subnet_id                     = azurerm_subnet.example.id
     private_ip_address            = var.private_ip_address
+    private_ip_address_allocation = "Static"
   }
 }
 
 resource "tls_private_key" "example" {
   algorithm = "RSA"
   rsa_bits  = 4096
+
+  depends_on = [
+    azurerm_key_vault.example
+  ]
 }
 
-resource "azurerm_key_vault" "keyvaultopenai" {
+resource "azurerm_key_vault" "example" {
   name                = "keyvaultopenai"
   location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
@@ -75,36 +64,16 @@ resource "azurerm_key_vault" "keyvaultopenai" {
       "Recover",
       "Backup",
       "Restore",
-      "Purge",
+      "Purge"
     ]
   }
 }
 
-resource "azurerm_key_vault_secret" "publicclave" {
-  name         = "publicclave"
-  value        = tls_private_key.example.public_key_pem
-  key_vault_id = azurerm_key_vault.keyvaultopenai.id
-}
-
-resource "azurerm_key_vault_secret" "secretclave" {
-  name         = "secretclave"
-  value        = tls_private_key.example.private_key_pem
-  key_vault_id = azurerm_key_vault.keyvaultopenai.id
-}
-
-resource "azurerm_linux_virtual_machine" "vmopenai" {
+resource "azurerm_linux_virtual_machine" "example" {
   name                = "vmopenai"
-  resource_group_name = data.azurerm_resource_group.example.name
   location            = data.azurerm_resource_group.example.location
+  resource_group_name = data.azurerm_resource_group.example.name
   size                = "Standard_B2s"
-  network_interface_ids = [
-    azurerm_network_interface.nic1vmopenai.id,
-  ]
-
-  os_disk {
-    caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"
-  }
 
   source_image_reference {
     publisher = "Canonical"
@@ -113,16 +82,25 @@ resource "azurerm_linux_virtual_machine" "vmopenai" {
     version   = "latest"
   }
 
-  computer_name  = "vmopenai"
   admin_username = "azureuser"
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = azurerm_key_vault_secret.publicclave.value
+    public_key = azurerm_key_vault_secret.example_public.value
   }
+
+  os_disk {
+    name              = "osdisk"
+    caching           = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+
+  network_interface_ids = [
+    azurerm_network_interface.example.id
+  ]
 }
 
-resource "azurerm_public_ip" "pipbastionvmopenai" {
+resource "azurerm_public_ip" "example" {
   name                = "pipbastionvmopenai"
   location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
@@ -130,21 +108,43 @@ resource "azurerm_public_ip" "pipbastionvmopenai" {
   sku                 = "Standard"
 }
 
-resource "azurerm_subnet" "AzureBastionSubnet" {
+resource "azurerm_subnet" "example_bastion" {
   name                 = "AzureBastionSubnet"
   resource_group_name  = data.azurerm_resource_group.example.name
-  virtual_network_name = azurerm_virtual_network.vnetopenai.name
+  virtual_network_name = azurerm_virtual_network.example.name
   address_prefixes     = [var.address_prefixes2]
 }
 
-resource "azurerm_bastion_host" "vmopenaihost" {
+resource "azurerm_bastion_host" "example" {
   name                = "vmopenaihost"
   location            = data.azurerm_resource_group.example.location
   resource_group_name = data.azurerm_resource_group.example.name
+  sku                 = "Standard"
+  ip_connect_enabled  = true
 
   ip_configuration {
-    name                 = "vmopenaiconnect"
-    subnet_id            = azurerm_subnet.AzureBastionSubnet.id
-    public_ip_address_id = azurerm_public_ip.pipbastionvmopenai.id
+    name                          = "vmopenaiconnect"
+    subnet_id                     = azurerm_subnet.example_bastion.id
+    public_ip_address_id          = azurerm_public_ip.example.id
   }
 }
+
+resource "azurerm_key_vault_secret" "example_public" {
+  name         = "publicclave"
+  value        = tls_private_key.example.public_key_openssh
+  key_vault_id = azurerm_key_vault.example.id
+}
+
+resource "azurerm_key_vault_secret" "example_secret" {
+  name         = "secretclave"
+  value        = tls_private_key.example.private_key_pem
+  key_vault_id = azurerm_key_vault.example.id
+}
+
+variable "address_space" {}
+
+variable "address_prefixes" {}
+
+variable "address_prefixes2" {}
+
+variable "private_ip_address" {}
